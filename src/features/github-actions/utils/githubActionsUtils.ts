@@ -19,6 +19,24 @@ export function getRunDuration(run: WorkflowRun) {
   return Math.max(0, Math.round((updatedAt - startedAt) / 1000))
 }
 
+export function getDurationBetween(
+  startedAtValue: string | null,
+  completedAtValue: string | null,
+) {
+  if (!startedAtValue || !completedAtValue) {
+    return null
+  }
+
+  const startedAt = new Date(startedAtValue).getTime()
+  const completedAt = new Date(completedAtValue).getTime()
+
+  if (Number.isNaN(startedAt) || Number.isNaN(completedAt)) {
+    return null
+  }
+
+  return Math.max(0, Math.round((completedAt - startedAt) / 1000))
+}
+
 export function formatDuration(durationInSeconds: number | null) {
   if (durationInSeconds === null) {
     return '데이터 없음'

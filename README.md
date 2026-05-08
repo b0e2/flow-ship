@@ -6,6 +6,12 @@ It visualizes deployment status, pipeline progress, environment health, failure 
 
 ## Live
 
+Amplify:
+
+```txt
+https://main.d1cvodkenfaorb.amplifyapp.com
+```
+
 S3 static website:
 
 ```txt

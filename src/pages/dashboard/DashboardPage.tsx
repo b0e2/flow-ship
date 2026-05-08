@@ -1,18 +1,6 @@
 import { AppShell } from '../../shared/components/layout/AppShell'
-import { DashboardFilters } from '../../features/deployments/components/DashboardFilters'
-import { DeploymentCharts } from '../../features/deployments/components/DeploymentCharts'
-import { DeploymentChecklist } from '../../features/deployments/components/DeploymentChecklist'
-import { DeploymentPipeline } from '../../features/deployments/components/DeploymentPipeline'
-import { DeploymentTable } from '../../features/deployments/components/DeploymentTable'
-import { EnvironmentStatus } from '../../features/deployments/components/EnvironmentStatus'
-import { FailureLogs } from '../../features/deployments/components/FailureLogs'
-import { ReleaseNotes } from '../../features/deployments/components/ReleaseNotes'
-import { SummaryCards } from '../../features/deployments/components/SummaryCards'
-import { useDeployments } from '../../features/deployments/hooks/useDeployments'
 
 export function DashboardPage() {
-  const { data, isLoading, isError } = useDeployments()
-
   return (
     <AppShell>
       <div className="space-y-6">
@@ -40,35 +28,18 @@ export function DashboardPage() {
           </div>
         </section>
 
-        {isLoading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm font-semibold text-slate-600 shadow-sm">
-            Loading deployment telemetry...
-          </div>
-        ) : null}
-
-        {isError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-10 text-center text-sm font-semibold text-rose-700 shadow-sm">
-            Failed to load deployment telemetry.
-          </div>
-        ) : null}
-
-        {data ? (
-          <>
-            <DashboardFilters deployments={data.deployments} />
-            <SummaryCards deployments={data.deployments} />
-            <DeploymentCharts deployments={data.deployments} />
-            <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-              <DeploymentPipeline steps={data.pipelineSteps} />
-              <EnvironmentStatus environments={data.environments} />
-            </section>
-            <DeploymentTable deployments={data.deployments} />
-            <section className="grid gap-4 xl:grid-cols-3">
-              <FailureLogs failureLogs={data.failureLogs} />
-              <DeploymentChecklist />
-              <ReleaseNotes releaseNotes={data.releaseNotes} />
-            </section>
-          </>
-        ) : null}
+        <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            No repository connected
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+            Connect a GitHub repository to inspect real workflow runs.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            FlowShip only renders data returned by the GitHub Actions API. The
+            dashboard will stay empty until real workflow data is available.
+          </p>
+        </section>
       </div>
     </AppShell>
   )

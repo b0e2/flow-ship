@@ -10,9 +10,15 @@ import {
 
 type WorkflowRunTableProps = {
   runs: WorkflowRun[]
+  selectedRunId: number | null
+  onSelectRun: (runId: number) => void
 }
 
-export function WorkflowRunTable({ runs }: WorkflowRunTableProps) {
+export function WorkflowRunTable({
+  runs,
+  selectedRunId,
+  onSelectRun,
+}: WorkflowRunTableProps) {
   return (
     <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-100 px-6 py-5">
@@ -40,7 +46,13 @@ export function WorkflowRunTable({ runs }: WorkflowRunTableProps) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {runs.map((run) => (
-              <tr className="align-middle hover:bg-slate-50" key={run.id}>
+              <tr
+                className={`cursor-pointer align-middle transition hover:bg-slate-50 ${
+                  selectedRunId === run.id ? 'bg-slate-100' : ''
+                }`}
+                key={run.id}
+                onClick={() => onSelectRun(run.id)}
+              >
                 <td className="px-6 py-4 font-semibold text-slate-950">
                   {run.name ?? 'Unnamed workflow'}
                 </td>
@@ -76,7 +88,10 @@ export function WorkflowRunTable({ runs }: WorkflowRunTableProps) {
                 <td className="px-4 py-4 text-slate-700">
                   {formatDateTime(run.run_started_at ?? run.created_at)}
                 </td>
-                <td className="px-6 py-4">
+                <td
+                  className="px-6 py-4"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <a
                     className="inline-flex items-center gap-1.5 font-semibold text-slate-950 hover:underline"
                     href={run.html_url}

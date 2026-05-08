@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { AppShell } from '../../shared/components/layout/AppShell'
+import { FailureDetails } from '../../features/github-actions/components/FailureDetails'
+import { PipelineVisualizer } from '../../features/github-actions/components/PipelineVisualizer'
+import { WorkflowJobTimeline } from '../../features/github-actions/components/WorkflowJobTimeline'
 import { WorkflowMetrics } from '../../features/github-actions/components/WorkflowMetrics'
 import { WorkflowRunSummary } from '../../features/github-actions/components/WorkflowRunSummary'
 import { WorkflowRunTable } from '../../features/github-actions/components/WorkflowRunTable'
+import { useWorkflowJobs } from '../../features/github-actions/hooks/useWorkflowJobs'
 import { useWorkflowRuns } from '../../features/github-actions/hooks/useWorkflowRuns'
 import type { GitHubApiError } from '../../features/github-actions/model/githubActions.types'
+import { useGitHubActionsUiStore } from '../../features/github-actions/store/githubActionsUiStore'
 import { findLatestRun } from '../../features/github-actions/utils/githubActionsUtils'
 import { RepositoryConnectionSummary } from '../../features/repository/components/RepositoryConnectionSummary'
 import { RepositorySetupPanel } from '../../features/repository/components/RepositorySetupPanel'
@@ -36,11 +41,30 @@ function getErrorHelp(error: GitHubApiError) {
 
 export function DashboardPage() {
   const config = useRepositoryConfigStore((state) => state.config)
+  const selectedRunId = useGitHubActionsUiStore((state) => state.selectedRunId)
+  const setSelectedRunId = useGitHubActionsUiStore(
+    (state) => state.setSelectedRunId,
+  )
   const [isEditingConfig, setIsEditingConfig] = useState(false)
   const shouldShowSetup = !config || isEditingConfig
   const workflowRunsQuery = useWorkflowRuns(config)
-  const runs = workflowRunsQuery.data?.workflow_runs ?? []
+  const runs = useMemo(
+    () => workflowRunsQuery.data?.workflow_runs ?? [],
+    [workflowRunsQuery.data?.workflow_runs],
+  )
   const latestRun = findLatestRun(runs)
+  const selectedRun =
+    runs.find((run) => run.id === selectedRunId) ?? latestRun ?? null
+  const workflowJobsQuery = useWorkflowJobs(config, selectedRun?.id ?? null)
+  const jobs = workflowJobsQuery.data?.jobs ?? []
+
+  useEffect(() => {
+    const hasSelectedRun = runs.some((run) => run.id === selectedRunId)
+
+    if ((!selectedRunId || !hasSelectedRun) && latestRun) {
+      setSelectedRunId(latestRun.id)
+    }
+  }, [latestRun, runs, selectedRunId, setSelectedRunId])
 
   return (
     <AppShell>
@@ -150,9 +174,39 @@ export function DashboardPage() {
         workflowRunsQuery.isSuccess &&
         latestRun ? (
           <>
+            <PipelineVisualizer
+              isLoading={workflowJobsQuery.isLoading}
+              jobs={jobs}
+              run={selectedRun ?? latestRun}
+            />
             <WorkflowMetrics runs={runs} />
-            <WorkflowRunSummary run={latestRun} />
-            <WorkflowRunTable runs={runs} />
+            <WorkflowRunSummary run={selectedRun ?? latestRun} />
+            <WorkflowRunTable
+              onSelectRun={setSelectedRunId}
+              runs={runs}
+              selectedRunId={selectedRun?.id ?? null}
+            />
+            {workflowJobsQuery.isError ? (
+              <section className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
+                <AlertTriangle
+                  aria-hidden="true"
+                  className="mx-auto h-8 w-8 text-red-500"
+                />
+                <h2 className="mt-3 text-xl font-semibold tracking-tight text-red-950">
+                  선택된 run의 jobs를 가져오지 못했습니다.
+                </h2>
+              </section>
+            ) : (
+              <>
+                <WorkflowJobTimeline
+                  isLoading={workflowJobsQuery.isLoading}
+                  jobs={jobs}
+                />
+                {workflowJobsQuery.isSuccess ? (
+                  <FailureDetails jobs={jobs} />
+                ) : null}
+              </>
+            )}
           </>
         ) : null}
       </div>

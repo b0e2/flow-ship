@@ -53,7 +53,7 @@ FlowShip separates server state, client UI state, and local component state.
 - UI filter state: Zustand
 - Local widget state: React `useState`
 
-The current data source is a mock API. The API layer is separated from hooks, models, and UI components so it can be replaced with a backend API or GitHub Actions API later.
+The data layer is built around the GitHub Actions API. If workflow data is not available, FlowShip shows an empty state instead of generated placeholder data.
 
 ## Project Structure
 

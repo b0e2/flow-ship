@@ -124,69 +124,6 @@ main push
 → aws s3 sync dist s3://S3_BUCKET_NAME --delete
 ```
 
-## GitHub Secrets
-
-S3 배포 workflow를 실행하려면 repository secrets에 아래 값을 등록해야 합니다.
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
-- `S3_BUCKET_NAME`
-
-민감정보는 코드나 README에 직접 작성하지 않습니다.
-
-## AWS S3 정적 웹사이트 배포 URL
-
-제출 전 실제 S3 정적 웹사이트 URL을 입력합니다.
-
-```txt
-https://your-s3-static-website-url.example.com
-```
-
-## AWS Amplify 배포 URL
-
-제출 전 실제 Amplify Hosting URL을 입력합니다.
-
-```txt
-https://your-amplify-app-url.amplifyapp.com
-```
-
-## 시연 영상 링크
-
-제출 전 YouTube 시연 영상 링크를 입력합니다.
-
-```txt
-https://youtube.com/watch?v=your-demo-video-id
-```
-
-## 트러블슈팅
-
-### npm run build 실패
-
-- TypeScript import 경로가 올바른지 확인합니다.
-- `any`를 사용하지 않았는지 확인합니다.
-- Vite build output이 `dist`로 생성되는지 확인합니다.
-
-### GitHub Secrets 누락
-
-- repository settings의 Secrets and variables 메뉴를 확인합니다.
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`이 모두 등록되어 있는지 확인합니다.
-
-### S3 bucket policy 문제
-
-- GitHub Actions에서 사용하는 IAM user 또는 role에 `s3:PutObject`, `s3:DeleteObject`, `s3:ListBucket` 권한이 있는지 확인합니다.
-- 정적 웹사이트 호스팅 정책과 public access 설정을 프로젝트 요구사항에 맞게 확인합니다.
-
-### Amplify baseDirectory 오류
-
-- Vite의 build output은 `dist`입니다.
-- `amplify.yml`의 artifacts `baseDirectory`가 `dist`로 설정되어 있는지 확인합니다.
-
-### Vite build output 설정
-
-- 별도 설정이 없다면 Vite는 `npm run build` 시 `dist` 폴더를 생성합니다.
-- S3 sync와 Amplify artifacts 경로 모두 `dist`를 기준으로 맞춥니다.
-
 ## 프로젝트 의의
 
 FlowShip은 단순 정적 페이지 배포에서 끝나지 않고, CI/CD 상태 자체를 서비스 주제로 확장한 프로젝트입니다.

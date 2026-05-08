@@ -19,6 +19,49 @@ export function getRunDuration(run: WorkflowRun) {
   return Math.max(0, Math.round((updatedAt - startedAt) / 1000))
 }
 
+export function formatDuration(durationInSeconds: number | null) {
+  if (durationInSeconds === null) {
+    return '데이터 없음'
+  }
+
+  if (durationInSeconds < 60) {
+    return `${durationInSeconds.toString()}s`
+  }
+
+  const minutes = Math.floor(durationInSeconds / 60)
+  const seconds = durationInSeconds % 60
+
+  if (minutes < 60) {
+    return seconds > 0
+      ? `${minutes.toString()}m ${seconds.toString()}s`
+      : `${minutes.toString()}m`
+  }
+
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+
+  return remainingMinutes > 0
+    ? `${hours.toString()}h ${remainingMinutes.toString()}m`
+    : `${hours.toString()}h`
+}
+
+export function formatDateTime(value: string | null) {
+  if (!value) {
+    return '데이터 없음'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return '데이터 없음'
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
+}
+
 export function formatWorkflowStatus(
   status: string,
   conclusion: string | null,

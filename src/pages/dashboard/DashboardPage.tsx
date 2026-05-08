@@ -1,6 +1,14 @@
+import { useState } from 'react'
 import { AppShell } from '../../shared/components/layout/AppShell'
+import { RepositoryConnectionSummary } from '../../features/repository/components/RepositoryConnectionSummary'
+import { RepositorySetupPanel } from '../../features/repository/components/RepositorySetupPanel'
+import { useRepositoryConfigStore } from '../../features/repository/store/repositoryConfigStore'
 
 export function DashboardPage() {
+  const config = useRepositoryConfigStore((state) => state.config)
+  const [isEditingConfig, setIsEditingConfig] = useState(false)
+  const shouldShowSetup = !config || isEditingConfig
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -28,18 +36,34 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            No repository connected
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-            Connect a GitHub repository to inspect real workflow runs.
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            FlowShip only renders data returned by the GitHub Actions API. The
-            dashboard will stay empty until real workflow data is available.
-          </p>
-        </section>
+        {shouldShowSetup ? (
+          <RepositorySetupPanel
+            initialConfig={config}
+            onSaved={() => setIsEditingConfig(false)}
+          />
+        ) : (
+          <RepositoryConnectionSummary
+            config={config}
+            onChangeRepository={() => setIsEditingConfig(true)}
+          />
+        )}
+
+        {config && !shouldShowSetup ? (
+          <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Ready for real workflow data
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+              Repository connected. Workflow runs are not rendered in this step
+              yet.
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              FlowShip will only show data returned by the GitHub Actions API.
+              Until workflow run UI is implemented, no fake pipeline or
+              deployment history is displayed.
+            </p>
+          </section>
+        ) : null}
       </div>
     </AppShell>
   )

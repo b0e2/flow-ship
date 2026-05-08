@@ -1,8 +1,20 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { GitPullRequest, Link, LockKeyhole, PlugZap } from 'lucide-react'
+import {
+  GitPullRequest,
+  Link,
+  Loader2,
+  LockKeyhole,
+  PlugZap,
+  RefreshCw,
+} from 'lucide-react'
+import {
+  listGitHubRepositories,
+  type GitHubRepository,
+} from '../api/githubRepositoriesApi'
 import type { RepositoryConfig } from '../model/repository.types'
 import { useRepositoryConfigStore } from '../store/repositoryConfigStore'
+import type { GitHubApiError } from '../../github-actions/model/githubActions.types'
 
 type RepositorySetupPanelProps = {
   initialConfig?: RepositoryConfig | null
@@ -34,6 +46,17 @@ function sanitizeOptionalValue(value: string) {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
+function isGitHubApiError(error: unknown): error is GitHubApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    'message' in error &&
+    typeof error.status === 'number' &&
+    typeof error.message === 'string'
+  )
+}
+
 export function RepositorySetupPanel({
   initialConfig = null,
   onSaved,
@@ -43,9 +66,52 @@ export function RepositorySetupPanel({
     toFormState(initialConfig),
   )
   const [error, setError] = useState<string | null>(null)
+  const [repositories, setRepositories] = useState<GitHubRepository[]>([])
+  const [isLoadingRepositories, setIsLoadingRepositories] = useState(false)
 
   const updateField = (field: keyof RepositoryFormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const handleLoadRepositories = async () => {
+    setIsLoadingRepositories(true)
+    setError(null)
+
+    try {
+      const loadedRepositories = await listGitHubRepositories({
+        owner: form.owner,
+        token: form.token,
+      })
+      setRepositories(loadedRepositories)
+
+      if (loadedRepositories.length === 0) {
+        setError('불러올 수 있는 repository가 없습니다.')
+      }
+    } catch (caughtError) {
+      const message = isGitHubApiError(caughtError)
+        ? `${caughtError.status.toString()} · ${caughtError.message}`
+        : 'GitHub repository 목록을 불러오지 못했습니다.'
+      setError(message)
+    } finally {
+      setIsLoadingRepositories(false)
+    }
+  }
+
+  const handleRepositorySelect = (repositoryId: string) => {
+    const selectedRepository = repositories.find(
+      (repository) => repository.id.toString() === repositoryId,
+    )
+
+    if (!selectedRepository) {
+      return
+    }
+
+    setForm((current) => ({
+      ...current,
+      owner: selectedRepository.ownerLogin,
+      repo: selectedRepository.name,
+      branch: selectedRepository.defaultBranch,
+    }))
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -94,6 +160,56 @@ export function RepositorySetupPanel({
       </div>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                GitHub repository 자동 불러오기
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                token이 있으면 접근 가능한 repository를, token이 없으면 입력한
+                owner의 public repository를 불러옵니다.
+              </p>
+            </div>
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-500 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isLoadingRepositories}
+              onClick={handleLoadRepositories}
+              type="button"
+            >
+              {isLoadingRepositories ? (
+                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw aria-hidden="true" className="h-4 w-4" />
+              )}
+              Load repositories
+            </button>
+          </div>
+
+          {repositories.length > 0 ? (
+            <label className="mt-4 block">
+              <span className="text-sm font-medium text-slate-700">
+                불러온 repository 선택
+              </span>
+              <select
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                defaultValue=""
+                onChange={(event) => handleRepositorySelect(event.target.value)}
+              >
+                <option disabled value="">
+                  repository를 선택하세요
+                </option>
+                {repositories.map((repository) => (
+                  <option key={repository.id} value={repository.id}>
+                    {repository.fullName} · {repository.defaultBranch}
+                    {repository.private ? ' · private' : ' · public'}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-medium text-slate-700">
@@ -177,7 +293,9 @@ export function RepositorySetupPanel({
             </span>
             <input
               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
-              onChange={(event) => updateField('amplifyUrl', event.target.value)}
+              onChange={(event) =>
+                updateField('amplifyUrl', event.target.value)
+              }
               placeholder="https://main.example.amplifyapp.com"
               type="url"
               value={form.amplifyUrl}

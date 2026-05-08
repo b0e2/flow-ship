@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { AppShell } from '../../shared/components/layout/AppShell'
+import { DeploymentHealthPanel } from '../../features/github-actions/components/DeploymentHealthPanel'
 import { FailureDetails } from '../../features/github-actions/components/FailureDetails'
 import { PipelineVisualizer } from '../../features/github-actions/components/PipelineVisualizer'
 import { WorkflowJobTimeline } from '../../features/github-actions/components/WorkflowJobTimeline'
 import { WorkflowMetrics } from '../../features/github-actions/components/WorkflowMetrics'
 import { WorkflowRunSummary } from '../../features/github-actions/components/WorkflowRunSummary'
 import { WorkflowRunTable } from '../../features/github-actions/components/WorkflowRunTable'
+import { useDeployTargetHealth } from '../../features/github-actions/hooks/useDeployTargetHealth'
 import { useWorkflowJobs } from '../../features/github-actions/hooks/useWorkflowJobs'
 import { useWorkflowRuns } from '../../features/github-actions/hooks/useWorkflowRuns'
 import type { GitHubApiError } from '../../features/github-actions/model/githubActions.types'
@@ -48,6 +50,7 @@ export function DashboardPage() {
   const [isEditingConfig, setIsEditingConfig] = useState(false)
   const shouldShowSetup = !config || isEditingConfig
   const workflowRunsQuery = useWorkflowRuns(config)
+  const deployTargetHealthQuery = useDeployTargetHealth(config)
   const runs = useMemo(
     () => workflowRunsQuery.data?.workflow_runs ?? [],
     [workflowRunsQuery.data?.workflow_runs],
@@ -178,6 +181,12 @@ export function DashboardPage() {
               isLoading={workflowJobsQuery.isLoading}
               jobs={jobs}
               run={selectedRun ?? latestRun}
+            />
+            <DeploymentHealthPanel
+              config={config}
+              healthResults={deployTargetHealthQuery.data ?? []}
+              isLoading={deployTargetHealthQuery.isLoading}
+              latestRun={latestRun}
             />
             <WorkflowMetrics runs={runs} />
             <WorkflowRunSummary run={selectedRun ?? latestRun} />

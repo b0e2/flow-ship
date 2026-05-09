@@ -57,6 +57,17 @@ function formatLastUpdatedAt(value: number) {
   }).format(new Date(value))
 }
 
+function getLatestRunStatusLabel(
+  status: string | undefined,
+  conclusion: string | null | undefined,
+) {
+  if (!status) {
+    return '데이터 없음'
+  }
+
+  return status === 'completed' ? (conclusion ?? 'completed') : status
+}
+
 export function DashboardPage() {
   const config = useRepositoryConfigStore((state) => state.config)
   const hasHydratedRepositoryConfig = useRepositoryConfigStore(
@@ -102,12 +113,7 @@ export function DashboardPage() {
     if (defaultConfig) {
       setConfig(defaultConfig)
     }
-  }, [
-    config,
-    hasHydratedRepositoryConfig,
-    isEditingConfig,
-    setConfig,
-  ])
+  }, [config, hasHydratedRepositoryConfig, isEditingConfig, setConfig])
 
   useEffect(() => {
     const hasSelectedRun = runs.some((run) => run.id === selectedRunId)
@@ -119,57 +125,79 @@ export function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
-        <section className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              FlowShip
-            </h1>
-            <p className="mt-4 max-w-2xl text-xl font-medium text-slate-700">
-              Ship faster with visible deployment flow.
-            </p>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              GitHub Actions 기반 배포 파이프라인의 상태와 안정성을 한눈에
-              확인하는 대시보드입니다.
-            </p>
-          </div>
+      <div className="space-y-5">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                FlowShip
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                Pipeline command center
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                GitHub Actions 기반 배포 파이프라인의 현재 상태를 실제 workflow
+                run, jobs, steps 데이터로 관측합니다.
+              </p>
+            </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Observability scope
-            </p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">
-              Actions · S3 · Amplify · Vite
-            </p>
+            {config && !shouldShowSetup ? (
+              <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[520px]">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Repository
+                  </p>
+                  <p className="mt-2 break-words text-sm font-semibold text-slate-950">
+                    {config.owner}/{config.repo}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">
+                    {config.branch}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Latest run
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-950">
+                    {getLatestRunStatusLabel(
+                      latestRun?.status,
+                      latestRun?.conclusion,
+                    )}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-slate-500">
+                    {latestRun?.head_sha.slice(0, 7) ?? '데이터 없음'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Live watch
+                  </p>
+                  <p
+                    className={`mt-2 inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      isWatchingLatestRun
+                        ? 'bg-red-50 text-red-700'
+                        : 'bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {isWatchingLatestRun ? (
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                    ) : null}
+                    {isWatchingLatestRun ? 'LIVE' : 'Idle'}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">
+                    {formatLastUpdatedAt(workflowRunsQuery.dataUpdatedAt)}
+                  </p>
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
 
         {config && !shouldShowSetup ? (
-          <section className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              {isWatchingLatestRun ? (
-                <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-700">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                  LIVE
-                </span>
-              ) : (
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
-                  Watching latest workflow run
-                </span>
-              )}
-              <span className="text-sm font-medium text-slate-600">
-                {isWatchingLatestRun
-                  ? 'queued 또는 in_progress 상태라 5초마다 갱신합니다.'
-                  : 'completed 상태에서는 자동 polling을 중지합니다.'}
-              </span>
-            </div>
-            <p className="text-sm font-medium text-slate-500">
-              마지막 갱신:{' '}
-              <span className="text-slate-900">
-                {formatLastUpdatedAt(workflowRunsQuery.dataUpdatedAt)}
-              </span>
-            </p>
-          </section>
+          <RepositoryConnectionSummary
+            config={config}
+            onChangeRepository={() => setIsEditingConfig(true)}
+          />
         ) : null}
 
         {shouldShowSetup ? (
@@ -190,12 +218,7 @@ export function DashboardPage() {
               onSaved={() => setIsEditingConfig(false)}
             />
           </>
-        ) : (
-          <RepositoryConnectionSummary
-            config={config}
-            onChangeRepository={() => setIsEditingConfig(true)}
-          />
-        )}
+        ) : null}
 
         {config && !shouldShowSetup && workflowRunsQuery.isLoading ? (
           <section className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
@@ -271,40 +294,46 @@ export function DashboardPage() {
               jobs={jobs}
               run={selectedRun ?? latestRun}
             />
-            <DeploymentHealthPanel
-              config={config}
-              healthResults={deployTargetHealthQuery.data ?? []}
-              isLoading={deployTargetHealthQuery.isLoading}
-              latestRun={latestRun}
-            />
-            <WorkflowMetrics runs={runs} />
-            <WorkflowRunSummary run={selectedRun ?? latestRun} />
-            <WorkflowRunTable
-              onSelectRun={setSelectedRunId}
-              runs={runs}
-              selectedRunId={selectedRun?.id ?? null}
-            />
-            {workflowJobsQuery.isError ? (
-              <section className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
-                <AlertTriangle
-                  aria-hidden="true"
-                  className="mx-auto h-8 w-8 text-red-500"
+            <WorkflowMetrics compact runs={runs} />
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+              <div className="space-y-5">
+                <WorkflowRunSummary run={selectedRun ?? latestRun} />
+                <WorkflowRunTable
+                  onSelectRun={setSelectedRunId}
+                  runs={runs}
+                  selectedRunId={selectedRun?.id ?? null}
                 />
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-red-950">
-                  선택된 run의 jobs를 가져오지 못했습니다.
-                </h2>
-              </section>
-            ) : (
-              <>
-                <WorkflowJobTimeline
-                  isLoading={workflowJobsQuery.isLoading}
-                  jobs={jobs}
+              </div>
+              <div className="space-y-5">
+                <DeploymentHealthPanel
+                  config={config}
+                  healthResults={deployTargetHealthQuery.data ?? []}
+                  isLoading={deployTargetHealthQuery.isLoading}
+                  latestRun={latestRun}
                 />
-                {workflowJobsQuery.isSuccess ? (
-                  <FailureDetails jobs={jobs} />
-                ) : null}
-              </>
-            )}
+                {workflowJobsQuery.isError ? (
+                  <section className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
+                    <AlertTriangle
+                      aria-hidden="true"
+                      className="mx-auto h-8 w-8 text-red-500"
+                    />
+                    <h2 className="mt-3 text-xl font-semibold tracking-tight text-red-950">
+                      선택된 run의 jobs를 가져오지 못했습니다.
+                    </h2>
+                  </section>
+                ) : (
+                  <>
+                    <WorkflowJobTimeline
+                      isLoading={workflowJobsQuery.isLoading}
+                      jobs={jobs}
+                    />
+                    {workflowJobsQuery.isSuccess ? (
+                      <FailureDetails jobs={jobs} />
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </div>
           </>
         ) : null}
       </div>

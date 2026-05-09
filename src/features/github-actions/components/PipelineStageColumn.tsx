@@ -11,18 +11,18 @@ type PipelineStageColumnProps = {
 
 function getStageClassName(status: PipelineStage['status']) {
   if (status === 'success') {
-    return 'border-emerald-200 bg-emerald-50/50'
+    return 'border-emerald-200 bg-emerald-50/40'
   }
 
   if (status === 'failure') {
-    return 'border-red-200 bg-red-50/50'
+    return 'border-red-200 bg-red-50/40'
   }
 
   if (status === 'in_progress') {
-    return 'border-blue-200 bg-blue-50/50'
+    return 'border-blue-200 bg-blue-50/40'
   }
 
-  return 'border-slate-200 bg-slate-50'
+  return 'border-slate-200 bg-slate-50/80'
 }
 
 export function PipelineStageColumn({
@@ -32,27 +32,27 @@ export function PipelineStageColumn({
   stage,
 }: PipelineStageColumnProps) {
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+    <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
       <section
-        className={`flex max-h-full min-w-[200px] max-w-[220px] flex-col rounded-3xl border p-3 ${getStageClassName(
+        className={`flex min-w-[180px] max-w-[205px] flex-1 flex-col rounded-3xl border p-2.5 transition duration-300 hover:-translate-y-0.5 hover:shadow-sm ${getStageClassName(
           stage.status,
         )}`}
       >
-        <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+        <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
               Stage
             </p>
-            <h3 className="mt-1 text-base font-semibold text-slate-950">
+            <h3 className="mt-0.5 text-sm font-semibold text-slate-950">
               {stage.name}
             </h3>
           </div>
-          <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-700">
             {stage.status}
           </span>
         </div>
 
-        <div className="min-h-0 space-y-2 overflow-auto pr-1">
+        <div className="space-y-1.5">
           {stage.nodes.map((node) => (
             <PipelineNodeCard
               isSelected={selectedNodeId === node.id}
@@ -69,8 +69,8 @@ export function PipelineStageColumn({
           aria-hidden="true"
           className="flex items-center justify-center text-slate-300"
         >
-          <div className="hidden h-0.5 w-10 bg-slate-200 lg:block" />
-          <ArrowRight className="hidden h-5 w-5 lg:block" />
+          <div className="flowship-flow-line hidden h-0.5 w-8 rounded-full bg-gradient-to-r from-slate-200 via-slate-400 to-slate-200 lg:block" />
+          <ArrowRight className="hidden h-4 w-4 animate-pulse lg:block" />
           <div className="h-8 w-0.5 bg-slate-200 lg:hidden" />
         </div>
       ) : null}

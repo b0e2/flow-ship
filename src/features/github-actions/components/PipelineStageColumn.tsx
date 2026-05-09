@@ -34,16 +34,16 @@ export function PipelineStageColumn({
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
       <section
-        className={`min-w-[260px] rounded-3xl border p-4 ${getStageClassName(
+        className={`flex max-h-full min-w-[200px] max-w-[220px] flex-col rounded-3xl border p-3 ${getStageClassName(
           stage.status,
         )}`}
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Stage
             </p>
-            <h3 className="mt-1 text-lg font-semibold text-slate-950">
+            <h3 className="mt-1 text-base font-semibold text-slate-950">
               {stage.name}
             </h3>
           </div>
@@ -52,7 +52,7 @@ export function PipelineStageColumn({
           </span>
         </div>
 
-        <div className="space-y-3">
+        <div className="min-h-0 space-y-2 overflow-auto pr-1">
           {stage.nodes.map((node) => (
             <PipelineNodeCard
               isSelected={selectedNodeId === node.id}

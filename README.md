@@ -36,6 +36,9 @@ http://mybucket-20263620.s3-website-us-east-1.amazonaws.com
 - Failure job/step details
 - S3 and Amplify deploy target URL links
 - Browser-based deploy target health checks with CORS guidance
+- Local Workspace Account for separating browser-local repository settings by user
+- Private and organization repository lookup when a GitHub token is provided
+- Token validation against the GitHub `/user` API
 - Loading, error, empty, and success states
 
 ## Tech Stack
@@ -66,16 +69,50 @@ FlowShip separates server state, persisted client state, and local component sta
   - registered repositories
   - active repository
   - selected workflow run
+  - local workspace auth session
 - React `useState` manages local form and widget state.
 
 The GitHub Actions API client lives under `src/features/github-actions/api`. Repository configuration lives under `src/features/repository`.
+
+## Local Workspace Account
+
+FlowShip is a frontend-only demo, so it uses a Local Workspace Account instead of a real backend authentication system.
+
+- Users can sign up and log in locally in the browser.
+- Passwords are stored as SHA-256 hashes with the email included in the hash input, not as plain text.
+- Repository settings are separated per local user in `localStorage`.
+- This is not production-grade authentication. A real service should use backend auth, secure sessions, and GitHub OAuth or a backend proxy.
+
+## Private And Organization Repositories
+
+Public repositories can be loaded without a token. When a GitHub token is provided, FlowShip validates it with `GET /user` and uses `GET /user/repos?visibility=all&affiliation=owner,collaborator,organization_member` so repositories owned by the user, collaborator repositories, private repositories, and organization-member repositories can be listed when the token has access.
+
+Token permission guidance:
+
+- Fine-grained token: verify Repository access and Actions read permission.
+- Classic token: `repo`, `workflow`, and `read:org` may be required.
+- Token values are never displayed directly in the UI.
+- Tokens are stored only in this browser's localStorage as part of the repository config. Treat them as sensitive.
+- For production, GitHub OAuth or a backend proxy is recommended.
+
+## Control Center Layout
+
+The dashboard is designed as a full-width deployment control center:
+
+- Left panel: project overview and repository list.
+- Center panel: active repository Pipeline Dependency Graph and selected node detail.
+- Right panel: Failure Diagnosis and Deployment Health.
+- Bottom panel: workflow metrics, recent runs, and job/step details.
+
+The layout prioritizes quickly answering what is deploying, where it is stuck or failed, and what action to take next.
 
 ## Security Notes
 
 - GitHub token is optional.
 - Public repositories can be queried without a token.
-- Private repositories or rate limit avoidance may require a GitHub token.
+- Private repositories, organization repositories, or rate limit avoidance may require a GitHub token.
 - Token values are treated as sensitive and are not displayed directly in the UI.
+- Browser localStorage is not a secure secret vault. Use the token feature carefully in this frontend-only demo.
 - A production service should prefer OAuth or a backend proxy instead of storing tokens in browser local storage.
 - AWS Access Key ID and AWS Secret Access Key are not requested in the frontend.
 - FlowShip does not use the AWS SDK in the browser.
@@ -96,13 +133,15 @@ npm run build
 
 ## Usage
 
-1. Add one or more GitHub repositories.
-2. Optionally enter a GitHub token per repository.
-3. Load repositories from the GitHub API or manually enter repository details.
-4. Confirm the branch.
-5. Optionally enter S3 Website URL and Amplify URL.
-6. Select an active repository from the project list.
-7. Inspect the Pipeline Dependency Graph, failure diagnosis, deploy target health, workflow runs, and job details.
+1. Sign up or log in with a Local Workspace Account.
+2. Add one or more GitHub repositories.
+3. Enter a GitHub owner.
+4. Optionally enter and validate a GitHub token for private or organization repositories.
+5. Load repositories from the GitHub API or manually enter repository details.
+6. Select a repository and confirm the branch.
+7. Optionally enter S3 Website URL and Amplify URL.
+8. Select an active repository from the project list.
+9. Inspect the Pipeline Dependency Graph, failure diagnosis, deploy target health, workflow runs, and job details.
 
 FlowShip only renders data returned by the GitHub APIs. If a repository has no workflow runs, jobs, or steps, the dashboard shows an empty state.
 
@@ -140,6 +179,10 @@ S3_BUCKET_NAME
 ### Repository Not Found
 
 Check the owner, repository name, and branch. Private repositories require a token with access to the repository.
+
+### Private Or Organization Repositories Missing
+
+Validate the token in the repository wizard. Fine-grained tokens need repository access and Actions read permission. Classic tokens may need `repo`, `workflow`, and `read:org`.
 
 ### GitHub API Rate Limit
 

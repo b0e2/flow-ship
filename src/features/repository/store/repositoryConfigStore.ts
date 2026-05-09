@@ -1,11 +1,15 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { RepositoryConfig } from '../model/repository.types'
 
-type RepositoryConfigState = {
+type PersistedRepositoryState = {
   repositories: RepositoryConfig[]
   activeRepositoryId: string | null
+}
+
+type RepositoryConfigState = PersistedRepositoryState & {
+  storageUserId: string | null
   hasHydrated: boolean
+  setStorageUser: (userId: string | null) => void
   addRepository: (repository: RepositoryConfig) => void
   updateRepository: (id: string, partial: Partial<RepositoryConfig>) => void
   removeRepository: (id: string) => void
@@ -16,123 +20,249 @@ type RepositoryConfigState = {
   setHasHydrated: (hasHydrated: boolean) => void
 }
 
+const LEGACY_STORAGE_KEY = 'flow-ship-repository-config'
+
+function getUserStorageKey(userId: string) {
+  return `flowship:repositories:${userId}`
+}
+
+function isRepositoryConfig(value: unknown): value is RepositoryConfig {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.id === 'string' &&
+    typeof record.name === 'string' &&
+    typeof record.owner === 'string' &&
+    typeof record.repo === 'string' &&
+    typeof record.branch === 'string'
+  )
+}
+
+function isPersistedRepositoryState(
+  value: unknown,
+): value is PersistedRepositoryState {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    Array.isArray(record.repositories) &&
+    record.repositories.every(isRepositoryConfig) &&
+    (typeof record.activeRepositoryId === 'string' ||
+      record.activeRepositoryId === null)
+  )
+}
+
+function readUserState(userId: string): PersistedRepositoryState | null {
+  const raw = localStorage.getItem(getUserStorageKey(userId))
+
+  if (!raw) {
+    return null
+  }
+
+  let parsed: unknown
+
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return null
+  }
+
+  return isPersistedRepositoryState(parsed) ? parsed : null
+}
+
+function writeUserState(userId: string, state: PersistedRepositoryState) {
+  localStorage.setItem(getUserStorageKey(userId), JSON.stringify(state))
+}
+
+function readLegacyState(): PersistedRepositoryState | null {
+  const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+
+  if (!raw) {
+    return null
+  }
+
+  let parsed: unknown
+
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return null
+  }
+
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('state' in parsed) ||
+    typeof parsed.state !== 'object' ||
+    parsed.state === null
+  ) {
+    return null
+  }
+
+  const state = parsed.state as Record<string, unknown>
+
+  if (isPersistedRepositoryState(state)) {
+    return state
+  }
+
+  if ('config' in state && isRepositoryConfig(state.config)) {
+    return {
+      repositories: [state.config],
+      activeRepositoryId: state.config.id,
+    }
+  }
+
+  return null
+}
+
+function persistForCurrentUser(state: RepositoryConfigState) {
+  if (!state.storageUserId) {
+    return
+  }
+
+  writeUserState(state.storageUserId, {
+    repositories: state.repositories,
+    activeRepositoryId: state.activeRepositoryId,
+  })
+}
+
+export function removeRepositoryConfigForUser(userId: string) {
+  localStorage.removeItem(getUserStorageKey(userId))
+}
+
 export const useRepositoryConfigStore = create<RepositoryConfigState>()(
-  persist(
-    (set, get) => ({
-      repositories: [],
-      activeRepositoryId: null,
-      hasHydrated: false,
-      addRepository: (repository) =>
-        set((state) => {
-          const existingIndex = state.repositories.findIndex(
-            (item) => item.id === repository.id,
-          )
-          const repositories =
-            existingIndex >= 0
-              ? state.repositories.map((item) =>
-                  item.id === repository.id ? repository : item,
-                )
-              : [...state.repositories, repository]
+  (set, get) => ({
+    repositories: [],
+    activeRepositoryId: null,
+    storageUserId: null,
+    hasHydrated: false,
+    setStorageUser: (userId) => {
+      if (!userId) {
+        set({
+          repositories: [],
+          activeRepositoryId: null,
+          storageUserId: null,
+          hasHydrated: true,
+        })
+        return
+      }
 
-          return {
-            repositories,
-            activeRepositoryId: repository.id,
-          }
-        }),
-      updateRepository: (id, partial) =>
-        set((state) => ({
-          repositories: state.repositories.map((repository) =>
-            repository.id === id
-              ? { ...repository, ...partial, id }
-              : repository,
-          ),
-        })),
-      removeRepository: (id) =>
-        set((state) => {
-          const repositories = state.repositories.filter(
-            (repository) => repository.id !== id,
-          )
-          const activeRepositoryId =
-            state.activeRepositoryId === id
-              ? (repositories[0]?.id ?? null)
-              : state.activeRepositoryId
+      const savedState = readUserState(userId)
+      const legacyState = savedState ? null : readLegacyState()
+      const nextState = savedState ?? legacyState ?? null
 
-          return { repositories, activeRepositoryId }
-        }),
-      setActiveRepository: (id) => set({ activeRepositoryId: id }),
-      clearRepositories: () =>
-        set({ repositories: [], activeRepositoryId: null }),
-      getActiveRepository: () => {
-        const state = get()
-        return (
-          state.repositories.find(
-            (repository) => repository.id === state.activeRepositoryId,
-          ) ?? null
+      if (legacyState && !savedState) {
+        writeUserState(userId, legacyState)
+      }
+
+      set({
+        repositories: nextState?.repositories ?? [],
+        activeRepositoryId: nextState?.activeRepositoryId ?? null,
+        storageUserId: userId,
+        hasHydrated: true,
+      })
+    },
+    addRepository: (repository) =>
+      set((state) => {
+        const existingIndex = state.repositories.findIndex(
+          (item) => item.id === repository.id,
         )
-      },
-      setConfig: (config) =>
-        set((state) => {
-          const repositories = state.repositories.some(
-            (repository) => repository.id === config.id,
-          )
-            ? state.repositories.map((repository) =>
-                repository.id === config.id ? config : repository,
+        const repositories =
+          existingIndex >= 0
+            ? state.repositories.map((item) =>
+                item.id === repository.id ? repository : item,
               )
-            : [...state.repositories, config]
-
-          return {
-            repositories,
-            activeRepositoryId: config.id,
-          }
-        }),
-      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
-    }),
-    {
-      name: 'flow-ship-repository-config',
-      version: 1,
-      partialize: (state) => ({
-        repositories: state.repositories,
-        activeRepositoryId: state.activeRepositoryId,
-      }),
-      migrate: (persistedState: unknown) => {
-        if (
-          typeof persistedState !== 'object' ||
-          persistedState === null ||
-          !('config' in persistedState)
-        ) {
-          return persistedState
-        }
-
-        const legacyState = persistedState as {
-          config?: Omit<RepositoryConfig, 'id' | 'name'> & {
-            id?: string
-            name?: string
-          }
-        }
-
-        if (!legacyState.config) {
-          return {
-            repositories: [],
-            activeRepositoryId: null,
-          }
-        }
-
-        const repository = {
-          ...legacyState.config,
-          id:
-            legacyState.config.id ??
-            `${legacyState.config.owner}/${legacyState.config.repo}:${legacyState.config.branch}`,
-          name: legacyState.config.name ?? legacyState.config.repo,
-        }
-
-        return {
-          repositories: [repository],
+            : [...state.repositories, repository]
+        const nextState = {
+          ...state,
+          repositories,
           activeRepositoryId: repository.id,
         }
-      },
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true)
-      },
+
+        persistForCurrentUser(nextState)
+
+        return nextState
+      }),
+    updateRepository: (id, partial) =>
+      set((state) => {
+        const repositories = state.repositories.map((repository) =>
+          repository.id === id ? { ...repository, ...partial, id } : repository,
+        )
+        const nextState = { ...state, repositories }
+
+        persistForCurrentUser(nextState)
+
+        return nextState
+      }),
+    removeRepository: (id) =>
+      set((state) => {
+        const repositories = state.repositories.filter(
+          (repository) => repository.id !== id,
+        )
+        const activeRepositoryId =
+          state.activeRepositoryId === id
+            ? (repositories[0]?.id ?? null)
+            : state.activeRepositoryId
+        const nextState = { ...state, repositories, activeRepositoryId }
+
+        persistForCurrentUser(nextState)
+
+        return nextState
+      }),
+    setActiveRepository: (id) =>
+      set((state) => {
+        const nextState = { ...state, activeRepositoryId: id }
+
+        persistForCurrentUser(nextState)
+
+        return nextState
+      }),
+    clearRepositories: () =>
+      set((state) => {
+        const nextState = {
+          ...state,
+          repositories: [],
+          activeRepositoryId: null,
+        }
+
+        persistForCurrentUser(nextState)
+
+        return nextState
+      }),
+    getActiveRepository: () => {
+      const state = get()
+      return (
+        state.repositories.find(
+          (repository) => repository.id === state.activeRepositoryId,
+        ) ?? null
+      )
     },
-  ),
+    setConfig: (config) =>
+      set((state) => {
+        const repositories = state.repositories.some(
+          (repository) => repository.id === config.id,
+        )
+          ? state.repositories.map((repository) =>
+              repository.id === config.id ? config : repository,
+            )
+          : [...state.repositories, config]
+        const nextState = {
+          ...state,
+          repositories,
+          activeRepositoryId: config.id,
+        }
+
+        persistForCurrentUser(nextState)
+
+        return nextState
+      }),
+    setHasHydrated: (hasHydrated) => set({ hasHydrated }),
+  }),
 )

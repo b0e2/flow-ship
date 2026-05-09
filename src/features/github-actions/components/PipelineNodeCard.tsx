@@ -67,7 +67,7 @@ export function PipelineNodeCard({
 
   return (
     <button
-      className={`w-full rounded-2xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getNodeClassName(
+      className={`w-full rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getNodeClassName(
         node.status,
       )} ${isSelected ? 'ring-2 ring-slate-950 ring-offset-2' : ''} ${
         isRunning ? 'animate-pulse' : ''
@@ -75,7 +75,7 @@ export function PipelineNodeCard({
       onClick={onSelect}
       type="button"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase">
           <StatusIcon status={node.status} />
           {node.status}
@@ -84,9 +84,13 @@ export function PipelineNodeCard({
           {node.source}
         </span>
       </div>
-      <h4 className="mt-3 text-sm font-semibold leading-5">{node.name}</h4>
-      <p className="mt-2 text-xs font-medium opacity-75">{node.jobName}</p>
-      <p className="mt-3 text-xs font-semibold opacity-80">
+      <h4 className="mt-2 line-clamp-2 text-sm font-semibold leading-5">
+        {node.name}
+      </h4>
+      <p className="mt-1 truncate text-xs font-medium opacity-75">
+        {node.jobName}
+      </p>
+      <p className="mt-2 text-xs font-semibold opacity-80">
         {formatDuration(node.durationSeconds)}
       </p>
     </button>

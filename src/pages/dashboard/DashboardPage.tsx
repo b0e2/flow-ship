@@ -47,7 +47,7 @@ function getErrorHelp(error: GitHubApiError) {
   }
 
   if (error.status === 403) {
-    return 'GitHub API rate limit 또는 권한 문제일 수 있습니다. token 설정을 확인하세요.'
+    return 'GitHub API rate limit 또는 권한 문제일 수 있습니다. repository는 조회되지만 Actions 권한이 부족할 수 있습니다. fine-grained token은 Repository access와 Actions read, classic token은 repo, workflow, read:org 권한을 확인하세요.'
   }
 
   return 'GitHub Actions API 요청에 실패했습니다. repository 설정과 네트워크 상태를 확인하세요.'
@@ -175,6 +175,14 @@ export function DashboardPage() {
           </section>
           <RepositorySetupPanel
             initialConfig={editingRepository}
+            onCancel={
+              repositories.length > 0
+                ? () => {
+                    setEditingRepository(null)
+                    setIsEditingRepository(false)
+                  }
+                : undefined
+            }
             onSaved={() => {
               setEditingRepository(null)
               setIsEditingRepository(false)
@@ -277,10 +285,10 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[280px_minmax(0,1fr)_360px] xl:grid-rows-[minmax(0,1fr)_250px] xl:overflow-hidden">
+        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[260px_minmax(720px,1fr)_340px] xl:grid-rows-[minmax(0,1fr)_280px] xl:overflow-hidden">
           <aside className="flex min-h-0 flex-col gap-3 overflow-hidden xl:row-span-2">
             <div className="shrink-0">
-              <MultiProjectOverview items={repositoryLatestRunStates} />
+              <MultiProjectOverview compact items={repositoryLatestRunStates} />
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
               <RepositoryList

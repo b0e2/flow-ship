@@ -6,19 +6,25 @@ import {
   GitPullRequest,
   Loader2,
   LockKeyhole,
+  RotateCcw,
   RefreshCw,
+  ShieldCheck,
+  X,
 } from 'lucide-react'
 import type { GitHubApiError } from '../../github-actions/model/githubActions.types'
 import {
   listGitHubRepositories,
+  validateGitHubToken,
+  type GitHubViewer,
   type GitHubRepository,
-} from '../api/githubRepositoriesApi'
+} from '../api/githubRepositoryApi'
 import type { RepositoryConfig } from '../model/repository.types'
 import { useRepositoryConfigStore } from '../store/repositoryConfigStore'
 
 type RepositorySetupPanelProps = {
   initialConfig?: RepositoryConfig | null
   onSaved?: () => void
+  onCancel?: () => void
 }
 
 type RepositoryWizardStep = 1 | 2 | 3 | 4
@@ -86,6 +92,7 @@ function formatRepositoryUpdatedAt(value: string) {
 
 export function RepositorySetupPanel({
   initialConfig = null,
+  onCancel,
   onSaved,
 }: RepositorySetupPanelProps) {
   const addRepository = useRepositoryConfigStore((state) => state.addRepository)
@@ -109,7 +116,14 @@ export function RepositorySetupPanel({
     Boolean(initialConfig?.token),
   )
   const [isLoadingRepositories, setIsLoadingRepositories] = useState(false)
+  const [isValidatingToken, setIsValidatingToken] = useState(false)
+  const [validatedViewer, setValidatedViewer] = useState<GitHubViewer | null>(
+    null,
+  )
   const [error, setError] = useState<string | null>(null)
+  const selectedRepository =
+    repositories.find((repository) => repository.id === selectedRepositoryId) ??
+    null
 
   const filteredRepositories = useMemo(() => {
     const query = repositorySearch.trim().toLowerCase()
@@ -122,6 +136,7 @@ export function RepositorySetupPanel({
       return (
         repository.name.toLowerCase().includes(query) ||
         repository.fullName.toLowerCase().includes(query) ||
+        repository.ownerLogin.toLowerCase().includes(query) ||
         (repository.description?.toLowerCase().includes(query) ?? false)
       )
     })
@@ -129,6 +144,51 @@ export function RepositorySetupPanel({
 
   const updateField = (field: keyof RepositoryFormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
+
+    if (field === 'token') {
+      setValidatedViewer(null)
+    }
+  }
+
+  const resetDraft = () => {
+    setStep(initialConfig ? 3 : 1)
+    setForm(toFormState(initialConfig))
+    setRepositories([])
+    setSelectedRepositoryId(null)
+    setRepositorySearch('')
+    setIsManualEntry(Boolean(initialConfig))
+    setIsAdvancedOpen(Boolean(initialConfig?.token))
+    setValidatedViewer(null)
+    setError(null)
+  }
+
+  const cancelWizard = () => {
+    const shouldCancel = window.confirm('입력 중인 설정을 버릴까요?')
+
+    if (!shouldCancel) {
+      return
+    }
+
+    resetDraft()
+    onCancel?.()
+  }
+
+  const validateToken = async () => {
+    setIsValidatingToken(true)
+    setError(null)
+    setValidatedViewer(null)
+
+    try {
+      const viewer = await validateGitHubToken(form.token)
+      setValidatedViewer(viewer)
+    } catch (caughtError) {
+      const message = isGitHubApiError(caughtError)
+        ? `${caughtError.status.toString()} · ${caughtError.message}`
+        : 'GitHub token을 검증하지 못했습니다.'
+      setError(`Invalid token: ${message}`)
+    } finally {
+      setIsValidatingToken(false)
+    }
   }
 
   const loadRepositories = async () => {
@@ -162,7 +222,9 @@ export function RepositorySetupPanel({
       const message = isGitHubApiError(caughtError)
         ? `${caughtError.status.toString()} · ${caughtError.message}`
         : 'GitHub repository 목록을 불러오지 못했습니다.'
-      setError(message)
+      setError(
+        `${message} 권한 부족이면 fine-grained token의 Repository access와 Actions read 권한 또는 classic token의 repo, workflow, read:org 권한을 확인하세요.`,
+      )
     } finally {
       setIsLoadingRepositories(false)
     }
@@ -248,8 +310,20 @@ export function RepositorySetupPanel({
   return (
     <section className="mx-auto grid w-full max-w-7xl gap-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:grid-cols-[320px_minmax(0,1fr)]">
       <aside className="rounded-3xl bg-slate-950 p-5 text-white">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
-          <GitPullRequest aria-hidden="true" className="h-5 w-5" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+            <GitPullRequest aria-hidden="true" className="h-5 w-5" />
+          </div>
+          {onCancel ? (
+            <button
+              aria-label="Close wizard"
+              className="rounded-xl bg-white/10 p-2 text-slate-200 transition hover:bg-white/20 hover:text-white"
+              onClick={cancelWizard}
+              type="button"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          ) : null}
         </div>
         <h2 className="mt-5 text-2xl font-semibold tracking-tight">
           Add deployment project
@@ -326,23 +400,69 @@ export function RepositorySetupPanel({
             </button>
 
             {isAdvancedOpen ? (
-              <label className="mt-4 block">
-                <span className="text-sm font-semibold text-slate-700">
-                  GitHub token optional
-                </span>
-                <input
-                  autoComplete="off"
-                  className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
-                  onChange={(event) => updateField('token', event.target.value)}
-                  placeholder="ghp_..."
-                  type="password"
-                  value={form.token}
-                />
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                  Private repository 접근 또는 rate limit 회피가 필요할 때만
-                  사용하세요. token 값은 화면에 직접 표시하지 않습니다.
-                </p>
-              </label>
+              <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    GitHub token optional
+                  </span>
+                  <input
+                    autoComplete="off"
+                    className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                    onChange={(event) =>
+                      updateField('token', event.target.value)
+                    }
+                    placeholder="ghp_..."
+                    type="password"
+                    value={form.token}
+                  />
+                </label>
+                <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                  <p>Public repository는 token 없이 조회할 수 있습니다.</p>
+                  <p>
+                    Private 또는 organization repository는 GitHub token이 필요할
+                    수 있습니다.
+                  </p>
+                  <p>
+                    Fine-grained token은 Repository access와 Actions read 권한을
+                    확인하세요.
+                  </p>
+                  <p>
+                    Classic token은 repo, workflow, read:org 권한이 필요할 수
+                    있습니다.
+                  </p>
+                  <p>
+                    token은 이 브라우저의 localStorage에만 저장되며 화면에 직접
+                    표시되지 않습니다.
+                  </p>
+                  <p>
+                    실제 서비스에서는 GitHub OAuth 또는 backend proxy 사용이
+                    권장됩니다.
+                  </p>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!form.token.trim() || isValidatingToken}
+                    onClick={() => void validateToken()}
+                    type="button"
+                  >
+                    {isValidatingToken ? (
+                      <Loader2
+                        aria-hidden="true"
+                        className="h-4 w-4 animate-spin"
+                      />
+                    ) : (
+                      <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+                    )}
+                    Validate token
+                  </button>
+                  {validatedViewer ? (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                      Valid token for {validatedViewer.login}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -417,10 +537,26 @@ export function RepositorySetupPanel({
                           {repository.fullName}
                         </p>
                       </div>
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                        {repository.private ? 'private' : 'public'}
-                      </span>
+                      <div className="flex flex-wrap justify-end gap-1">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                            repository.private
+                              ? 'bg-amber-50 text-amber-700'
+                              : 'bg-emerald-50 text-emerald-700'
+                          }`}
+                        >
+                          {repository.private ? 'private' : 'public'}
+                        </span>
+                        {repository.owner.type === 'Organization' ? (
+                          <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                            org
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      owner: {repository.ownerLogin}
+                    </p>
                     <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
                       {repository.description ?? 'No description'}
                     </p>
@@ -578,6 +714,16 @@ export function RepositorySetupPanel({
                   `${form.owner || 'owner'}/${form.repo || 'repo'}`,
                 ],
                 ['Branch', form.branch || '데이터 없음'],
+                [
+                  'Visibility',
+                  selectedRepository
+                    ? `${selectedRepository.private ? 'private' : 'public'}${
+                        selectedRepository.owner.type === 'Organization'
+                          ? ' · org'
+                          : ''
+                      }`
+                    : 'manual',
+                ],
                 ['Token', form.token ? 'Token configured' : 'Public API mode'],
                 ['S3 URL', form.s3WebsiteUrl || '나중에 추가 가능'],
                 ['Amplify URL', form.amplifyUrl || '나중에 추가 가능'],
@@ -605,19 +751,38 @@ export function RepositorySetupPanel({
         ) : null}
 
         <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={step === 1}
-            onClick={() =>
-              setStep(
-                (current) => Math.max(1, current - 1) as RepositoryWizardStep,
-              )
-            }
-            type="button"
-          >
-            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-            Back
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={step === 1}
+              onClick={() =>
+                setStep(
+                  (current) => Math.max(1, current - 1) as RepositoryWizardStep,
+                )
+              }
+              type="button"
+            >
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+              Back
+            </button>
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-500"
+              onClick={resetDraft}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" className="h-4 w-4" />
+              Reset
+            </button>
+            {onCancel ? (
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-500"
+                onClick={cancelWizard}
+                type="button"
+              >
+                Cancel
+              </button>
+            ) : null}
+          </div>
 
           {step < 4 ? (
             <button

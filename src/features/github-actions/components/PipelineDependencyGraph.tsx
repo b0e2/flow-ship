@@ -75,14 +75,14 @@ export function PipelineDependencyGraph({
   }
 
   return (
-    <section className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="shrink-0">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
               Pipeline Dependency Graph
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
               {run.name ?? 'Unnamed workflow'}
             </h2>
             <p className="mt-2 text-sm text-slate-600">
@@ -113,7 +113,7 @@ export function PipelineDependencyGraph({
         </div>
       </div>
 
-      <div className="mt-5 min-h-0 flex-1 overflow-auto pb-2">
+      <div className="mt-4 min-h-0 flex-1 overflow-auto pb-2">
         <div className="flex min-w-max flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-3">
           {stages.map((stage, index) => (
             <PipelineStageColumn
@@ -128,7 +128,7 @@ export function PipelineDependencyGraph({
       </div>
 
       {activeNode ? (
-        <div className="mt-4 max-h-[220px] shrink-0 overflow-auto rounded-3xl">
+        <div className="mt-3 max-h-[170px] shrink-0 overflow-auto rounded-3xl">
           <PipelineNodeDetail node={activeNode} />
         </div>
       ) : null}

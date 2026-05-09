@@ -2,6 +2,7 @@ import type { RepositoryLatestRunState } from '../../github-actions/hooks/useRep
 
 type MultiProjectOverviewProps = {
   items: RepositoryLatestRunState[]
+  compact?: boolean
 }
 
 function getCounts(items: RepositoryLatestRunState[]) {
@@ -38,20 +39,39 @@ function getCounts(items: RepositoryLatestRunState[]) {
   )
 }
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({
+  compact = false,
+  label,
+  value,
+}: {
+  compact?: boolean
+  label: string
+  value: number | string
+}) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div
+      className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
+        compact ? 'p-3' : 'p-4'
+      }`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+      <p
+        className={`mt-2 font-semibold tracking-tight text-slate-950 ${
+          compact ? 'text-xl' : 'text-2xl'
+        }`}
+      >
         {value}
       </p>
     </div>
   )
 }
 
-export function MultiProjectOverview({ items }: MultiProjectOverviewProps) {
+export function MultiProjectOverview({
+  compact = false,
+  items,
+}: MultiProjectOverviewProps) {
   const counts = getCounts(items)
   const completedLatestRuns = items.filter(
     (item) => item.latestRun?.status === 'completed',
@@ -62,13 +82,21 @@ export function MultiProjectOverview({ items }: MultiProjectOverviewProps) {
       : 0
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-      <StatCard label="Total projects" value={items.length} />
-      <StatCard label="Healthy" value={counts.healthy} />
-      <StatCard label="Failed" value={counts.failed} />
-      <StatCard label="Running" value={counts.running} />
-      <StatCard label="Unknown" value={counts.unknown + counts.queued} />
-      <StatCard label="Latest success rate" value={`${successRate}%`} />
+    <section
+      className={`grid gap-3 ${
+        compact ? 'grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-6'
+      }`}
+    >
+      <StatCard compact={compact} label="Total" value={items.length} />
+      <StatCard compact={compact} label="Healthy" value={counts.healthy} />
+      <StatCard compact={compact} label="Failed" value={counts.failed} />
+      <StatCard compact={compact} label="Running" value={counts.running} />
+      <StatCard
+        compact={compact}
+        label="Unknown"
+        value={counts.unknown + counts.queued}
+      />
+      <StatCard compact={compact} label="Success" value={`${successRate}%`} />
     </section>
   )
 }

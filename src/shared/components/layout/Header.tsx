@@ -1,3 +1,5 @@
+import { UserMenu } from '../../../features/auth/components/UserMenu'
+
 export function Header() {
   return (
     <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
@@ -10,6 +12,7 @@ export function Header() {
             Deployment Control Center
           </p>
         </div>
+        <UserMenu />
       </div>
     </header>
   )

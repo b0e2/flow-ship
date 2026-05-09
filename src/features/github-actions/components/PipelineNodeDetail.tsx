@@ -8,11 +8,11 @@ type PipelineNodeDetailProps = {
 
 export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
   return (
-    <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+    <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
       <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
         Node detail
       </p>
-      <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+      <h3 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
         {node.name}
       </h3>
       <p className="mt-2 text-sm font-medium text-slate-600">
@@ -20,8 +20,8 @@ export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
         {node.stepNumber ? ` · Step ${node.stepNumber.toString()}` : ''}
       </p>
 
-      <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl bg-white p-4">
+      <dl className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl bg-white p-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Status
           </dt>
@@ -29,7 +29,7 @@ export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
             {node.status}
           </dd>
         </div>
-        <div className="rounded-2xl bg-white p-4">
+        <div className="rounded-2xl bg-white p-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Duration
           </dt>
@@ -37,7 +37,7 @@ export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
             {formatDuration(node.durationSeconds)}
           </dd>
         </div>
-        <div className="rounded-2xl bg-white p-4">
+        <div className="rounded-2xl bg-white p-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Started
           </dt>
@@ -45,7 +45,7 @@ export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
             {formatDateTime(node.startedAt)}
           </dd>
         </div>
-        <div className="rounded-2xl bg-white p-4">
+        <div className="rounded-2xl bg-white p-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Completed
           </dt>
@@ -55,7 +55,7 @@ export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
         </div>
       </dl>
 
-      <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm leading-6 text-slate-600">
+      <p className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-white p-3 text-xs leading-5 text-slate-600">
         GitHub Actions jobs/steps API는 step log 본문을 포함하지 않습니다. 이
         패널은 실제 job/step 메타데이터만 표시하며, 상세 로그는 GitHub Actions
         링크에서 확인합니다.
@@ -63,7 +63,7 @@ export function PipelineNodeDetail({ node }: PipelineNodeDetailProps) {
 
       {node.htmlUrl ? (
         <a
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-950 hover:underline"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-950 hover:underline"
           href={node.htmlUrl}
           rel="noreferrer"
           target="_blank"

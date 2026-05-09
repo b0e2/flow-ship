@@ -12,7 +12,10 @@ export function AppShell({ children, className }: AppShellProps) {
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <Header />
       <main
-        className={cn('mx-auto w-full max-w-6xl px-6 py-10 lg:px-8', className)}
+        className={cn(
+          'mx-auto w-full max-w-[1920px] px-4 py-4 lg:px-5',
+          className,
+        )}
       >
         {children}
       </main>

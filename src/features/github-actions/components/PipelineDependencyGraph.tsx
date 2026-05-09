@@ -32,7 +32,7 @@ export function PipelineDependencyGraph({
 
   if (!run) {
     return (
-      <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+      <section className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
           데이터 없음
         </p>
@@ -45,7 +45,7 @@ export function PipelineDependencyGraph({
 
   if (isLoading) {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+      <section className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
         <Loader2
           aria-hidden="true"
           className="mx-auto h-8 w-8 animate-spin text-slate-400"
@@ -59,7 +59,7 @@ export function PipelineDependencyGraph({
 
   if (stages.length === 0) {
     return (
-      <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+      <section className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
           데이터 없음
         </p>
@@ -75,42 +75,45 @@ export function PipelineDependencyGraph({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Pipeline Dependency Graph
-          </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-            {run.name ?? 'Unnamed workflow'}
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            {run.head_branch ?? 'unknown branch'} · {getShortSha(run.head_sha)}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:items-end">
-          <p className="text-sm font-semibold text-slate-700">
-            {progress.toString()}% stage progress
-          </p>
-          <div className="h-2 w-full rounded-full bg-slate-100 sm:w-56">
-            <div
-              className="h-2 rounded-full bg-slate-950 transition-all"
-              style={{ width: `${progress.toString()}%` }}
-            />
+    <section className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="shrink-0">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Pipeline Dependency Graph
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+              {run.name ?? 'Unnamed workflow'}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {run.head_branch ?? 'unknown branch'} ·{' '}
+              {getShortSha(run.head_sha)}
+            </p>
           </div>
-          <a
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-950 hover:underline"
-            href={run.html_url}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Open run
-            <ExternalLink aria-hidden="true" className="h-4 w-4" />
-          </a>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <p className="text-sm font-semibold text-slate-700">
+              {progress.toString()}% stage progress
+            </p>
+            <div className="h-2 w-full rounded-full bg-slate-100 sm:w-56">
+              <div
+                className="h-2 rounded-full bg-slate-950 transition-all"
+                style={{ width: `${progress.toString()}%` }}
+              />
+            </div>
+            <a
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-950 hover:underline"
+              href={run.html_url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Open run
+              <ExternalLink aria-hidden="true" className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto pb-2">
+      <div className="mt-5 min-h-0 flex-1 overflow-auto pb-2">
         <div className="flex min-w-max flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-3">
           {stages.map((stage, index) => (
             <PipelineStageColumn
@@ -125,7 +128,7 @@ export function PipelineDependencyGraph({
       </div>
 
       {activeNode ? (
-        <div className="mt-6">
+        <div className="mt-4 max-h-[220px] shrink-0 overflow-auto rounded-3xl">
           <PipelineNodeDetail node={activeNode} />
         </div>
       ) : null}

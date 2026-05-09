@@ -10,6 +10,8 @@ export type GitHubRepository = {
   defaultBranch: string
   private: boolean
   htmlUrl: string
+  updatedAt: string
+  description: string | null
 }
 
 type GitHubRepositoryPayload = {
@@ -19,6 +21,8 @@ type GitHubRepositoryPayload = {
   default_branch?: unknown
   private?: unknown
   html_url?: unknown
+  updated_at?: unknown
+  description?: unknown
   owner?: {
     login?: unknown
   }
@@ -102,6 +106,9 @@ function toGitHubRepository(
     defaultBranch: payload.default_branch,
     private: payload.private,
     htmlUrl: payload.html_url,
+    updatedAt: typeof payload.updated_at === 'string' ? payload.updated_at : '',
+    description:
+      typeof payload.description === 'string' ? payload.description : null,
   }
 }
 
@@ -111,9 +118,9 @@ export async function listGitHubRepositories({
 }: RepositoryListOptions) {
   const trimmedOwner = owner?.trim()
   const trimmedToken = token?.trim()
-  const path = trimmedToken
-    ? '/user/repos?per_page=100&sort=updated'
-    : `/users/${encodeURIComponent(trimmedOwner ?? '')}/repos?per_page=100&sort=updated`
+  const path = trimmedOwner
+    ? `/users/${encodeURIComponent(trimmedOwner)}/repos?per_page=100&sort=updated`
+    : '/user/repos?per_page=100&sort=updated'
 
   if (!trimmedToken && !trimmedOwner) {
     throw {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { AppShell } from '../../shared/components/layout/AppShell'
 import { DeploymentHealthPanel } from '../../features/github-actions/components/DeploymentHealthPanel'
@@ -20,6 +20,7 @@ import {
 import { RepositoryConnectionSummary } from '../../features/repository/components/RepositoryConnectionSummary'
 import { RepositorySetupPanel } from '../../features/repository/components/RepositorySetupPanel'
 import { useRepositoryConfigStore } from '../../features/repository/store/repositoryConfigStore'
+import { getDefaultRepositoryConfig } from '../../features/repository/utils/defaultRepositoryConfig'
 
 function isGitHubApiError(error: unknown): error is GitHubApiError {
   return (
@@ -58,11 +59,16 @@ function formatLastUpdatedAt(value: number) {
 
 export function DashboardPage() {
   const config = useRepositoryConfigStore((state) => state.config)
+  const hasHydratedRepositoryConfig = useRepositoryConfigStore(
+    (state) => state.hasHydrated,
+  )
+  const setConfig = useRepositoryConfigStore((state) => state.setConfig)
   const selectedRunId = useGitHubActionsUiStore((state) => state.selectedRunId)
   const setSelectedRunId = useGitHubActionsUiStore(
     (state) => state.setSelectedRunId,
   )
   const [isEditingConfig, setIsEditingConfig] = useState(false)
+  const hasAttemptedDefaultBootstrap = useRef(false)
   const shouldShowSetup = !config || isEditingConfig
   const workflowRunsQuery = useWorkflowRuns(config)
   const deployTargetHealthQuery = useDeployTargetHealth(config)
@@ -78,6 +84,30 @@ export function DashboardPage() {
     runs.find((run) => run.id === selectedRunId) ?? latestRun ?? null
   const workflowJobsQuery = useWorkflowJobs(config, selectedRun?.id ?? null)
   const jobs = workflowJobsQuery.data?.jobs ?? []
+
+  useEffect(() => {
+    if (
+      !hasHydratedRepositoryConfig ||
+      hasAttemptedDefaultBootstrap.current ||
+      config ||
+      isEditingConfig
+    ) {
+      return
+    }
+
+    hasAttemptedDefaultBootstrap.current = true
+
+    const defaultConfig = getDefaultRepositoryConfig()
+
+    if (defaultConfig) {
+      setConfig(defaultConfig)
+    }
+  }, [
+    config,
+    hasHydratedRepositoryConfig,
+    isEditingConfig,
+    setConfig,
+  ])
 
   useEffect(() => {
     const hasSelectedRun = runs.some((run) => run.id === selectedRunId)
@@ -143,10 +173,23 @@ export function DashboardPage() {
         ) : null}
 
         {shouldShowSetup ? (
-          <RepositorySetupPanel
-            initialConfig={config}
-            onSaved={() => setIsEditingConfig(false)}
-          />
+          <>
+            {!config && getDefaultRepositoryConfig() ? (
+              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-sm font-semibold text-slate-950">
+                  기본 repository 설정을 준비했습니다.
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Vite env 설정이 감지되면 앱 시작 시 자동으로 연결하고 실제
+                  GitHub Actions 데이터를 조회합니다.
+                </p>
+              </section>
+            ) : null}
+            <RepositorySetupPanel
+              initialConfig={config}
+              onSaved={() => setIsEditingConfig(false)}
+            />
+          </>
         ) : (
           <RepositoryConnectionSummary
             config={config}

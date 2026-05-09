@@ -9,6 +9,7 @@ import { WorkflowMetrics } from '../../features/github-actions/components/Workfl
 import { WorkflowRunSummary } from '../../features/github-actions/components/WorkflowRunSummary'
 import { WorkflowRunTable } from '../../features/github-actions/components/WorkflowRunTable'
 import { useDeployTargetHealth } from '../../features/github-actions/hooks/useDeployTargetHealth'
+import { useRepositoryLatestRuns } from '../../features/github-actions/hooks/useRepositoryLatestRuns'
 import { useWorkflowJobs } from '../../features/github-actions/hooks/useWorkflowJobs'
 import { useWorkflowRuns } from '../../features/github-actions/hooks/useWorkflowRuns'
 import type { GitHubApiError } from '../../features/github-actions/model/githubActions.types'
@@ -21,6 +22,9 @@ import { RepositoryConnectionSummary } from '../../features/repository/component
 import { RepositorySetupPanel } from '../../features/repository/components/RepositorySetupPanel'
 import { useRepositoryConfigStore } from '../../features/repository/store/repositoryConfigStore'
 import { getDefaultRepositoryConfig } from '../../features/repository/utils/defaultRepositoryConfig'
+import { MultiProjectOverview } from '../../features/repository/components/MultiProjectOverview'
+import { RepositoryList } from '../../features/repository/components/RepositoryList'
+import type { RepositoryConfig } from '../../features/repository/model/repository.types'
 
 function isGitHubApiError(error: unknown): error is GitHubApiError {
   return (
@@ -58,20 +62,32 @@ function formatLastUpdatedAt(value: number) {
 }
 
 export function DashboardPage() {
-  const config = useRepositoryConfigStore((state) => state.config)
+  const repositories = useRepositoryConfigStore((state) => state.repositories)
+  const activeRepositoryId = useRepositoryConfigStore(
+    (state) => state.activeRepositoryId,
+  )
   const hasHydratedRepositoryConfig = useRepositoryConfigStore(
     (state) => state.hasHydrated,
   )
   const setConfig = useRepositoryConfigStore((state) => state.setConfig)
+  const setActiveRepository = useRepositoryConfigStore(
+    (state) => state.setActiveRepository,
+  )
   const selectedRunId = useGitHubActionsUiStore((state) => state.selectedRunId)
   const setSelectedRunId = useGitHubActionsUiStore(
     (state) => state.setSelectedRunId,
   )
-  const [isEditingConfig, setIsEditingConfig] = useState(false)
+  const [editingRepository, setEditingRepository] =
+    useState<RepositoryConfig | null>(null)
+  const [isEditingRepository, setIsEditingRepository] = useState(false)
   const hasAttemptedDefaultBootstrap = useRef(false)
-  const shouldShowSetup = !config || isEditingConfig
-  const workflowRunsQuery = useWorkflowRuns(config)
-  const deployTargetHealthQuery = useDeployTargetHealth(config)
+  const activeRepository =
+    repositories.find((repository) => repository.id === activeRepositoryId) ??
+    null
+  const shouldShowSetup = repositories.length === 0 || isEditingRepository
+  const repositoryLatestRunStates = useRepositoryLatestRuns(repositories)
+  const workflowRunsQuery = useWorkflowRuns(activeRepository)
+  const deployTargetHealthQuery = useDeployTargetHealth(activeRepository)
   const runs = useMemo(
     () => workflowRunsQuery.data?.workflow_runs ?? [],
     [workflowRunsQuery.data?.workflow_runs],
@@ -82,15 +98,18 @@ export function DashboardPage() {
     : false
   const selectedRun =
     runs.find((run) => run.id === selectedRunId) ?? latestRun ?? null
-  const workflowJobsQuery = useWorkflowJobs(config, selectedRun?.id ?? null)
+  const workflowJobsQuery = useWorkflowJobs(
+    activeRepository,
+    selectedRun?.id ?? null,
+  )
   const jobs = workflowJobsQuery.data?.jobs ?? []
 
   useEffect(() => {
     if (
       !hasHydratedRepositoryConfig ||
       hasAttemptedDefaultBootstrap.current ||
-      config ||
-      isEditingConfig
+      repositories.length > 0 ||
+      isEditingRepository
     ) {
       return
     }
@@ -103,9 +122,9 @@ export function DashboardPage() {
       setConfig(defaultConfig)
     }
   }, [
-    config,
     hasHydratedRepositoryConfig,
-    isEditingConfig,
+    isEditingRepository,
+    repositories.length,
     setConfig,
   ])
 
@@ -144,7 +163,11 @@ export function DashboardPage() {
           </div>
         </section>
 
-        {config && !shouldShowSetup ? (
+        {repositories.length > 0 ? (
+          <MultiProjectOverview items={repositoryLatestRunStates} />
+        ) : null}
+
+        {activeRepository && !shouldShowSetup ? (
           <section className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               {isWatchingLatestRun ? (
@@ -174,7 +197,7 @@ export function DashboardPage() {
 
         {shouldShowSetup ? (
           <>
-            {!config && getDefaultRepositoryConfig() ? (
+            {repositories.length === 0 && getDefaultRepositoryConfig() ? (
               <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-sm font-semibold text-slate-950">
                   기본 repository 설정을 준비했습니다.
@@ -186,18 +209,45 @@ export function DashboardPage() {
               </section>
             ) : null}
             <RepositorySetupPanel
-              initialConfig={config}
-              onSaved={() => setIsEditingConfig(false)}
+              initialConfig={editingRepository}
+              onSaved={() => {
+                setEditingRepository(null)
+                setIsEditingRepository(false)
+              }}
             />
           </>
         ) : (
-          <RepositoryConnectionSummary
-            config={config}
-            onChangeRepository={() => setIsEditingConfig(true)}
-          />
+          <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+            <div className="space-y-4">
+              <RepositoryList
+                activeRepositoryId={activeRepositoryId}
+                items={repositoryLatestRunStates}
+                onSelectRepository={setActiveRepository}
+              />
+              <button
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-500"
+                onClick={() => {
+                  setEditingRepository(null)
+                  setIsEditingRepository(true)
+                }}
+                type="button"
+              >
+                Add project
+              </button>
+            </div>
+            {activeRepository ? (
+              <RepositoryConnectionSummary
+                config={activeRepository}
+                onChangeRepository={() => {
+                  setEditingRepository(activeRepository)
+                  setIsEditingRepository(true)
+                }}
+              />
+            ) : null}
+          </div>
         )}
 
-        {config && !shouldShowSetup && workflowRunsQuery.isLoading ? (
+        {activeRepository && !shouldShowSetup && workflowRunsQuery.isLoading ? (
           <section className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
             <Loader2
               aria-hidden="true"
@@ -212,7 +262,7 @@ export function DashboardPage() {
           </section>
         ) : null}
 
-        {config && !shouldShowSetup && workflowRunsQuery.isError ? (
+        {activeRepository && !shouldShowSetup && workflowRunsQuery.isError ? (
           <section className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
             <AlertTriangle
               aria-hidden="true"
@@ -242,7 +292,7 @@ export function DashboardPage() {
           </section>
         ) : null}
 
-        {config &&
+        {activeRepository &&
         !shouldShowSetup &&
         workflowRunsQuery.isSuccess &&
         runs.length === 0 ? (
@@ -261,7 +311,7 @@ export function DashboardPage() {
           </section>
         ) : null}
 
-        {config &&
+        {activeRepository &&
         !shouldShowSetup &&
         workflowRunsQuery.isSuccess &&
         latestRun ? (
@@ -272,7 +322,7 @@ export function DashboardPage() {
               run={selectedRun ?? latestRun}
             />
             <DeploymentHealthPanel
-              config={config}
+              config={activeRepository}
               healthResults={deployTargetHealthQuery.data ?? []}
               isLoading={deployTargetHealthQuery.isLoading}
               latestRun={latestRun}

@@ -22,6 +22,7 @@ type RepositorySetupPanelProps = {
 }
 
 type RepositoryFormState = {
+  name: string
   owner: string
   repo: string
   branch: string
@@ -32,6 +33,7 @@ type RepositoryFormState = {
 
 function toFormState(config?: RepositoryConfig | null): RepositoryFormState {
   return {
+    name: config?.name ?? '',
     owner: config?.owner ?? '',
     repo: config?.repo ?? '',
     branch: config?.branch ?? 'main',
@@ -61,7 +63,13 @@ export function RepositorySetupPanel({
   initialConfig = null,
   onSaved,
 }: RepositorySetupPanelProps) {
-  const setConfig = useRepositoryConfigStore((state) => state.setConfig)
+  const addRepository = useRepositoryConfigStore((state) => state.addRepository)
+  const updateRepository = useRepositoryConfigStore(
+    (state) => state.updateRepository,
+  )
+  const setActiveRepository = useRepositoryConfigStore(
+    (state) => state.setActiveRepository,
+  )
   const [form, setForm] = useState<RepositoryFormState>(() =>
     toFormState(initialConfig),
   )
@@ -108,6 +116,7 @@ export function RepositorySetupPanel({
 
     setForm((current) => ({
       ...current,
+      name: current.name || selectedRepository.name,
       owner: selectedRepository.ownerLogin,
       repo: selectedRepository.name,
       branch: selectedRepository.defaultBranch,
@@ -120,20 +129,31 @@ export function RepositorySetupPanel({
     const owner = form.owner.trim()
     const repo = form.repo.trim()
     const branch = form.branch.trim()
+    const name = form.name.trim() || repo
 
     if (!owner || !repo || !branch) {
       setError('GitHub owner, repository name, branch는 필수입니다.')
       return
     }
 
-    setConfig({
+    const repository: RepositoryConfig = {
+      id: initialConfig?.id ?? `${owner}/${repo}:${branch}`,
+      name,
       owner,
       repo,
       branch,
       token: sanitizeOptionalValue(form.token),
       s3WebsiteUrl: sanitizeOptionalValue(form.s3WebsiteUrl),
       amplifyUrl: sanitizeOptionalValue(form.amplifyUrl),
-    })
+    }
+
+    if (initialConfig) {
+      updateRepository(initialConfig.id, repository)
+      setActiveRepository(repository.id)
+    } else {
+      addRepository(repository)
+    }
+
     setError(null)
     onSaved?.()
   }
@@ -211,6 +231,19 @@ export function RepositorySetupPanel({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">
+              Project name
+            </span>
+            <input
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+              onChange={(event) => updateField('name', event.target.value)}
+              placeholder="Production web"
+              type="text"
+              value={form.name}
+            />
+          </label>
+
           <label className="block">
             <span className="text-sm font-medium text-slate-700">
               GitHub owner
@@ -314,7 +347,7 @@ export function RepositorySetupPanel({
           type="submit"
         >
           <PlugZap aria-hidden="true" className="h-4 w-4" />
-          Connect Repository
+          {initialConfig ? 'Update Repository' : 'Add Repository'}
         </button>
       </form>
     </section>

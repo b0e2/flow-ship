@@ -3,6 +3,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { AppShell } from '../../shared/components/layout/AppShell'
 import { DeploymentHealthPanel } from '../../features/github-actions/components/DeploymentHealthPanel'
 import { FailureDetails } from '../../features/github-actions/components/FailureDetails'
+import { FailureDiagnosisPanel } from '../../features/github-actions/components/FailureDiagnosisPanel'
 import { PipelineDependencyGraph } from '../../features/github-actions/components/PipelineDependencyGraph'
 import { WorkflowJobTimeline } from '../../features/github-actions/components/WorkflowJobTimeline'
 import { WorkflowMetrics } from '../../features/github-actions/components/WorkflowMetrics'
@@ -216,36 +217,7 @@ export function DashboardPage() {
               }}
             />
           </>
-        ) : (
-          <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-            <div className="space-y-4">
-              <RepositoryList
-                activeRepositoryId={activeRepositoryId}
-                items={repositoryLatestRunStates}
-                onSelectRepository={setActiveRepository}
-              />
-              <button
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-500"
-                onClick={() => {
-                  setEditingRepository(null)
-                  setIsEditingRepository(true)
-                }}
-                type="button"
-              >
-                Add project
-              </button>
-            </div>
-            {activeRepository ? (
-              <RepositoryConnectionSummary
-                config={activeRepository}
-                onChangeRepository={() => {
-                  setEditingRepository(activeRepository)
-                  setIsEditingRepository(true)
-                }}
-              />
-            ) : null}
-          </div>
-        )}
+        ) : null}
 
         {activeRepository && !shouldShowSetup && workflowRunsQuery.isLoading ? (
           <section className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
@@ -316,45 +288,89 @@ export function DashboardPage() {
         workflowRunsQuery.isSuccess &&
         latestRun ? (
           <>
-            <PipelineDependencyGraph
-              isLoading={workflowJobsQuery.isLoading}
-              jobs={jobs}
-              run={selectedRun ?? latestRun}
-            />
-            <DeploymentHealthPanel
-              config={activeRepository}
-              healthResults={deployTargetHealthQuery.data ?? []}
-              isLoading={deployTargetHealthQuery.isLoading}
-              latestRun={latestRun}
-            />
-            <WorkflowMetrics runs={runs} />
-            <WorkflowRunSummary run={selectedRun ?? latestRun} />
-            <WorkflowRunTable
-              onSelectRun={setSelectedRunId}
-              runs={runs}
-              selectedRunId={selectedRun?.id ?? null}
-            />
-            {workflowJobsQuery.isError ? (
-              <section className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
-                <AlertTriangle
-                  aria-hidden="true"
-                  className="mx-auto h-8 w-8 text-red-500"
+            <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)_380px]">
+              <div className="space-y-4">
+                <RepositoryList
+                  activeRepositoryId={activeRepositoryId}
+                  items={repositoryLatestRunStates}
+                  onSelectRepository={setActiveRepository}
                 />
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-red-950">
-                  선택된 run의 jobs를 가져오지 못했습니다.
-                </h2>
-              </section>
-            ) : (
-              <>
-                <WorkflowJobTimeline
+                <button
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-500"
+                  onClick={() => {
+                    setEditingRepository(null)
+                    setIsEditingRepository(true)
+                  }}
+                  type="button"
+                >
+                  Add project
+                </button>
+                <RepositoryConnectionSummary
+                  config={activeRepository}
+                  onChangeRepository={() => {
+                    setEditingRepository(activeRepository)
+                    setIsEditingRepository(true)
+                  }}
+                />
+              </div>
+
+              <div className="space-y-5">
+                <PipelineDependencyGraph
+                  isLoading={workflowJobsQuery.isLoading}
+                  jobs={jobs}
+                  run={selectedRun ?? latestRun}
+                />
+                <WorkflowMetrics runs={runs} />
+              </div>
+
+              <div className="space-y-5">
+                <FailureDiagnosisPanel
                   isLoading={workflowJobsQuery.isLoading}
                   jobs={jobs}
                 />
-                {workflowJobsQuery.isSuccess ? (
-                  <FailureDetails jobs={jobs} />
-                ) : null}
-              </>
-            )}
+                <DeploymentHealthPanel
+                  config={activeRepository}
+                  healthResults={deployTargetHealthQuery.data ?? []}
+                  isLoading={deployTargetHealthQuery.isLoading}
+                  latestRun={latestRun}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+              <div className="space-y-5">
+                <WorkflowRunSummary run={selectedRun ?? latestRun} />
+                <WorkflowRunTable
+                  onSelectRun={setSelectedRunId}
+                  runs={runs}
+                  selectedRunId={selectedRun?.id ?? null}
+                />
+              </div>
+
+              <div className="space-y-5">
+                {workflowJobsQuery.isError ? (
+                  <section className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center shadow-sm">
+                    <AlertTriangle
+                      aria-hidden="true"
+                      className="mx-auto h-8 w-8 text-red-500"
+                    />
+                    <h2 className="mt-3 text-xl font-semibold tracking-tight text-red-950">
+                      선택된 run의 jobs를 가져오지 못했습니다.
+                    </h2>
+                  </section>
+                ) : (
+                  <>
+                    <WorkflowJobTimeline
+                      isLoading={workflowJobsQuery.isLoading}
+                      jobs={jobs}
+                    />
+                    {workflowJobsQuery.isSuccess ? (
+                      <FailureDetails jobs={jobs} />
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </div>
           </>
         ) : null}
       </div>

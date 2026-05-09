@@ -1,8 +1,8 @@
 # FlowShip
 
-FlowShip is a frontend CI/CD observability dashboard for GitHub Actions based deployment pipelines.
+FlowShip is a multi repository deployment control center for frontend projects that deploy through GitHub Actions.
 
-Users connect a GitHub repository, then FlowShip queries real GitHub Actions workflow runs, jobs, and steps to visualize pipeline progress, deployment status, failures, and deploy target URL health.
+Users register GitHub repositories, then FlowShip queries real GitHub Actions workflow runs, jobs, and steps to visualize deployment progress, pipeline dependency flow, failure diagnosis, and deploy target URL health.
 
 ## Development Flow
 
@@ -26,11 +26,12 @@ http://mybucket-20263620.s3-website-us-east-1.amazonaws.com
 
 ## Major Features
 
-- GitHub repository setup with owner, repo, branch, and optional token
+- Multi repository setup with owner, repo, branch, and optional token
 - GitHub repository list loading through the GitHub API
 - GitHub Actions workflow runs lookup
 - Workflow jobs and steps lookup
-- Real jobs/steps based Pipeline Visualizer
+- Real jobs/steps based Pipeline Dependency Graph
+- Failure Diagnosis with likely causes and recommended actions
 - Workflow run metrics from real API data
 - Failure job/step details
 - S3 and Amplify deploy target URL links
@@ -58,10 +59,12 @@ FlowShip separates server state, persisted client state, and local component sta
 - TanStack Query manages GitHub API server state:
   - workflow runs
   - workflow jobs and steps
+  - repository latest run summaries
   - workflows
   - deploy target health checks
 - Zustand manages client UI and persisted configuration:
-  - repository config
+  - registered repositories
+  - active repository
   - selected workflow run
 - React `useState` manages local form and widget state.
 
@@ -93,15 +96,15 @@ npm run build
 
 ## Usage
 
-1. Enter a GitHub owner.
-2. Optionally enter a GitHub token.
-3. Load repositories from the GitHub API or manually enter a repository name.
+1. Add one or more GitHub repositories.
+2. Optionally enter a GitHub token per repository.
+3. Load repositories from the GitHub API or manually enter repository details.
 4. Confirm the branch.
 5. Optionally enter S3 Website URL and Amplify URL.
-6. Select `Connect Repository`.
-7. Inspect workflow runs, pipeline steps, job details, and failure details.
+6. Select an active repository from the project list.
+7. Inspect the Pipeline Dependency Graph, failure diagnosis, deploy target health, workflow runs, and job details.
 
-FlowShip only renders data returned by the GitHub APIs. If a repository has no workflow runs, the dashboard shows an empty state.
+FlowShip only renders data returned by the GitHub APIs. If a repository has no workflow runs, jobs, or steps, the dashboard shows an empty state.
 
 ## Deployment
 
@@ -150,6 +153,10 @@ The selected repository and branch may not have GitHub Actions runs. FlowShip sh
 
 FlowShip displays only jobs and steps returned by the GitHub Actions API. If steps are missing in the API response, the UI shows an empty state for that area.
 
+### Failure Diagnosis Looks Incomplete
+
+GitHub Actions jobs/steps API does not include full log text. FlowShip diagnoses likely causes from real failed job and step names, status, and conclusion. Open the GitHub Actions detail link for full logs.
+
 ### Deploy Target Health Check Blocked
 
 Some S3 or Amplify URLs do not allow browser-origin health checks. FlowShip shows a CORS guidance message and keeps the direct open link available.
@@ -171,6 +178,6 @@ Fix TypeScript, lint, or dependency issues before deploying.
 
 ## Project Significance
 
-FlowShip is not a static dashboard mockup. It observes real GitHub Actions deployment data and turns workflow runs, jobs, and steps into an operational frontend deployment view.
+FlowShip is not a static dashboard mockup. It observes real GitHub Actions deployment data and turns workflow runs, jobs, and steps into a multi project deployment control center.
 
-The project demonstrates the progression from a mock prototype into a real API based product focused on frontend deployment reliability and visibility.
+The project demonstrates the progression from a mock prototype into a real API based product focused on frontend deployment reliability, dependency visualization, and failure diagnosis.

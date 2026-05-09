@@ -80,23 +80,31 @@ export function MultiProjectOverview({
     completedLatestRuns.length > 0
       ? Math.round((counts.healthy / completedLatestRuns.length) * 100)
       : 0
+  const compactStats = [
+    ['Total', items.length],
+    ['Failed', counts.failed],
+    ['Running', counts.running],
+    ['Success', `${successRate}%`],
+  ] as const
+
+  if (compact) {
+    return (
+      <section className="grid grid-cols-2 gap-2">
+        {compactStats.map(([label, value]) => (
+          <StatCard compact key={label} label={label} value={value} />
+        ))}
+      </section>
+    )
+  }
 
   return (
-    <section
-      className={`grid gap-3 ${
-        compact ? 'grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-6'
-      }`}
-    >
-      <StatCard compact={compact} label="Total" value={items.length} />
-      <StatCard compact={compact} label="Healthy" value={counts.healthy} />
-      <StatCard compact={compact} label="Failed" value={counts.failed} />
-      <StatCard compact={compact} label="Running" value={counts.running} />
-      <StatCard
-        compact={compact}
-        label="Unknown"
-        value={counts.unknown + counts.queued}
-      />
-      <StatCard compact={compact} label="Success" value={`${successRate}%`} />
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <StatCard label="Total" value={items.length} />
+      <StatCard label="Healthy" value={counts.healthy} />
+      <StatCard label="Failed" value={counts.failed} />
+      <StatCard label="Running" value={counts.running} />
+      <StatCard label="Unknown" value={counts.unknown + counts.queued} />
+      <StatCard label="Success" value={`${successRate}%`} />
     </section>
   )
 }

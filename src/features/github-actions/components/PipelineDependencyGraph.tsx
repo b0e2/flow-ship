@@ -28,7 +28,6 @@ export function PipelineDependencyGraph({
   const [selectedNode, setSelectedNode] = useState<PipelineNode | null>(null)
   const activeNode = selectedNode ?? preferredNode
   const progress = getPipelineProgress(stages)
-  const stageGridTemplateColumns = `repeat(${stages.length.toString()}, minmax(180px, 1fr))`
 
   if (!run) {
     return (
@@ -113,11 +112,8 @@ export function PipelineDependencyGraph({
         </div>
       </div>
 
-      <div className="mt-4 min-h-0 flex-1 pb-2">
-        <div
-          className="grid h-full min-h-0 gap-2"
-          style={{ gridTemplateColumns: stageGridTemplateColumns }}
-        >
+      <div className="mt-4 flex min-h-0 flex-1 items-start justify-center pb-2">
+        <div className="flex max-w-full items-start justify-center gap-2">
           {stages.map((stage, index) => (
             <PipelineStageColumn
               isLast={index === stages.length - 1}

@@ -13,7 +13,7 @@ const STAGE_NAMES: Record<string, string> = {
   quality: 'Quality',
   build: 'Build',
   deploy: 'Deploy',
-  verify: 'Verify',
+  verify: 'Finalize',
   other: 'Other',
 }
 
@@ -56,6 +56,16 @@ export function classifyStageByName(name: string) {
   const normalizedName = name.toLowerCase()
 
   if (
+    normalizedName.includes('post ') ||
+    normalizedName.includes('post checkout') ||
+    normalizedName.includes('post configure') ||
+    normalizedName.includes('post deploy') ||
+    normalizedName.includes('complete job')
+  ) {
+    return 'verify'
+  }
+
+  if (
     normalizedName.includes('set up job') ||
     normalizedName.includes('checkout') ||
     normalizedName.includes('setup node') ||
@@ -95,8 +105,7 @@ export function classifyStageByName(name: string) {
 
   if (
     normalizedName.includes('health check') ||
-    normalizedName.includes('post deploy') ||
-    normalizedName.includes('complete job')
+    normalizedName.includes('verify')
   ) {
     return 'verify'
   }

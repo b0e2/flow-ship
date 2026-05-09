@@ -34,7 +34,7 @@ export function PipelineStageColumn({
   return (
     <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
       <section
-        className={`flex min-w-[180px] max-w-[205px] flex-1 flex-col rounded-3xl border p-2.5 transition duration-300 hover:-translate-y-0.5 hover:shadow-sm ${getStageClassName(
+        className={`flex w-[176px] flex-col rounded-3xl border p-2.5 transition duration-300 hover:-translate-y-0.5 hover:shadow-sm ${getStageClassName(
           stage.status,
         )}`}
       >

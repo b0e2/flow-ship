@@ -91,6 +91,10 @@ export function formatWorkflowStatus(
   return status
 }
 
+export function isRunningWorkflowStatus(status: string) {
+  return status === 'queued' || status === 'in_progress'
+}
+
 export function isFailedConclusion(conclusion: string | null) {
   return conclusion === 'failure' || conclusion === 'timed_out'
 }

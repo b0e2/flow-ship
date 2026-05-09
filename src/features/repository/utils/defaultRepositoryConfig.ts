@@ -16,6 +16,8 @@ export function getDefaultRepositoryConfig(): RepositoryConfig | null {
   }
 
   return {
+    id: `${owner}/${repo}:${branch}`,
+    name: repo,
     owner,
     repo,
     branch,

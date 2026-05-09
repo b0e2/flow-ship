@@ -75,10 +75,10 @@ async function requestGitHubApi<TResponse>(
   return response.json() as Promise<TResponse>
 }
 
-export function getWorkflowRuns(config: RepositoryConfig) {
+export function getWorkflowRuns(config: RepositoryConfig, perPage = 20) {
   const searchParams = new URLSearchParams({
     branch: config.branch,
-    per_page: '20',
+    per_page: perPage.toString(),
   })
 
   return requestGitHubApi<WorkflowRunsResponse>(

@@ -1,4 +1,6 @@
 export type RepositoryConfig = {
+  id: string
+  name: string
   owner: string
   repo: string
   branch: string

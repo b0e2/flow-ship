@@ -103,10 +103,7 @@ function DeployTargetCard({ result }: { result: DeployTargetHealthResult }) {
           target="_blank"
         >
           <span className="truncate">{result.url}</span>
-          <ExternalLink
-            aria-hidden="true"
-            className="h-4 w-4 shrink-0"
-          />
+          <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
         </a>
       ) : (
         <p className="mt-4 text-sm font-medium opacity-70">설정된 URL 없음</p>
@@ -126,13 +123,17 @@ export function DeploymentHealthPanel({
       kind: 's3',
       url: config.s3WebsiteUrl ?? null,
       status: isLoading ? 'checking' : 'not_configured',
-      message: isLoading ? 'URL 상태를 확인하고 있습니다.' : 'URL이 설정되지 않았습니다.',
+      message: isLoading
+        ? 'URL 상태를 확인하고 있습니다.'
+        : 'URL이 설정되지 않았습니다.',
     },
     {
       kind: 'amplify',
       url: config.amplifyUrl ?? null,
       status: isLoading ? 'checking' : 'not_configured',
-      message: isLoading ? 'URL 상태를 확인하고 있습니다.' : 'URL이 설정되지 않았습니다.',
+      message: isLoading
+        ? 'URL 상태를 확인하고 있습니다.'
+        : 'URL이 설정되지 않았습니다.',
     },
   ]
   const results = healthResults.length > 0 ? healthResults : fallbackResults
@@ -147,6 +148,10 @@ export function DeploymentHealthPanel({
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
             Deploy target status
           </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            S3/Amplify URL만 확인합니다. 브라우저 CORS 정책으로 직접 확인할 수
+            없으면 링크로 열어 검증하세요.
+          </p>
         </div>
         <p className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
           {getRunDeploymentMessage(latestRun)}

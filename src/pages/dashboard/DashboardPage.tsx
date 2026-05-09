@@ -3,7 +3,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { AppShell } from '../../shared/components/layout/AppShell'
 import { DeploymentHealthPanel } from '../../features/github-actions/components/DeploymentHealthPanel'
 import { FailureDetails } from '../../features/github-actions/components/FailureDetails'
-import { PipelineVisualizer } from '../../features/github-actions/components/PipelineVisualizer'
+import { PipelineDependencyGraph } from '../../features/github-actions/components/PipelineDependencyGraph'
 import { WorkflowJobTimeline } from '../../features/github-actions/components/WorkflowJobTimeline'
 import { WorkflowMetrics } from '../../features/github-actions/components/WorkflowMetrics'
 import { WorkflowRunSummary } from '../../features/github-actions/components/WorkflowRunSummary'
@@ -316,7 +316,7 @@ export function DashboardPage() {
         workflowRunsQuery.isSuccess &&
         latestRun ? (
           <>
-            <PipelineVisualizer
+            <PipelineDependencyGraph
               isLoading={workflowJobsQuery.isLoading}
               jobs={jobs}
               run={selectedRun ?? latestRun}

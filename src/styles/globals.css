@@ -33,3 +33,34 @@ textarea,
 select {
   font: inherit;
 }
+
+@keyframes flowship-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes flowship-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flowship-flow-line {
+  animation: flowship-flow 1.8s linear infinite;
+  background-size: 200% 100%;
+}
+
+.flowship-rise {
+  animation: flowship-rise 0.32s ease-out both;
+}

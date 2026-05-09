@@ -30,6 +30,35 @@ import type { RepositoryConfig } from '../../features/repository/model/repositor
 import { useRepositoryConfigStore } from '../../features/repository/store/repositoryConfigStore'
 import { getDefaultRepositoryConfig } from '../../features/repository/utils/defaultRepositoryConfig'
 
+type DashboardPanel = 'diagnosis' | 'health' | 'runs' | 'jobs'
+
+const DASHBOARD_PANELS: Array<{
+  id: DashboardPanel
+  label: string
+  description: string
+}> = [
+  {
+    id: 'diagnosis',
+    label: 'Failure diagnosis',
+    description: '원인과 해결 액션',
+  },
+  {
+    id: 'health',
+    label: 'Deploy health',
+    description: 'S3/Amplify URL 상태',
+  },
+  {
+    id: 'runs',
+    label: 'Workflow runs',
+    description: '최근 실행과 KPI',
+  },
+  {
+    id: 'jobs',
+    label: 'Jobs & steps',
+    description: '선택 run 상세',
+  },
+]
+
 function isGitHubApiError(error: unknown): error is GitHubApiError {
   return (
     typeof error === 'object' &&
@@ -92,6 +121,8 @@ export function DashboardPage() {
   const [editingRepository, setEditingRepository] =
     useState<RepositoryConfig | null>(null)
   const [isEditingRepository, setIsEditingRepository] = useState(false)
+  const [selectedPanel, setSelectedPanel] =
+    useState<DashboardPanel>('diagnosis')
   const hasAttemptedDefaultBootstrap = useRef(false)
   const activeRepository =
     repositories.find((repository) => repository.id === activeRepositoryId) ??
@@ -270,33 +301,55 @@ export function DashboardPage() {
             >
               Add project
             </button>
-            {activeRepository ? (
-              <button
-                className="h-11 rounded-2xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-500"
-                onClick={() => {
-                  setEditingRepository(activeRepository)
-                  setIsEditingRepository(true)
-                }}
-                type="button"
-              >
-                Change
-              </button>
-            ) : null}
           </div>
         </section>
 
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[260px_minmax(720px,1fr)_340px] xl:grid-rows-[minmax(0,1fr)_280px] xl:overflow-hidden">
-          <aside className="flex min-h-0 flex-col gap-3 overflow-hidden xl:row-span-2">
+        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[280px_minmax(0,1fr)] xl:overflow-hidden">
+          <aside className="flex min-h-0 flex-col gap-3 overflow-hidden">
             <div className="shrink-0">
               <MultiProjectOverview compact items={repositoryLatestRunStates} />
             </div>
-            <div className="min-h-0 flex-1 overflow-auto">
+            <div className="min-h-[180px] overflow-auto">
               <RepositoryList
                 activeRepositoryId={activeRepositoryId}
                 items={repositoryLatestRunStates}
                 onSelectRepository={setActiveRepository}
               />
             </div>
+            <nav className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Inspect
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {DASHBOARD_PANELS.map((panel) => {
+                  const isSelected = selectedPanel === panel.id
+
+                  return (
+                    <button
+                      className={`w-full rounded-2xl px-3 py-2.5 text-left transition duration-200 ${
+                        isSelected
+                          ? 'bg-slate-950 text-white shadow-sm'
+                          : 'bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                      key={panel.id}
+                      onClick={() => setSelectedPanel(panel.id)}
+                      type="button"
+                    >
+                      <span className="block text-sm font-semibold">
+                        {panel.label}
+                      </span>
+                      <span
+                        className={`mt-0.5 block text-xs ${
+                          isSelected ? 'text-slate-300' : 'text-slate-500'
+                        }`}
+                      >
+                        {panel.description}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </nav>
             <button
               className="shrink-0 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-500"
               onClick={() => {
@@ -309,7 +362,7 @@ export function DashboardPage() {
             </button>
           </aside>
 
-          <main className="min-h-[560px] overflow-hidden xl:min-h-0">
+          <main className="grid min-h-[680px] gap-3 overflow-hidden xl:min-h-0 xl:grid-rows-[minmax(0,1fr)_310px]">
             {activeRepository && workflowRunsQuery.isLoading ? (
               <section className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
                 <Loader2
@@ -380,45 +433,41 @@ export function DashboardPage() {
                 run={selectedRun ?? latestRun}
               />
             ) : null}
-          </main>
 
-          <aside className="min-h-0 space-y-3 overflow-auto rounded-3xl border border-slate-200 bg-slate-50 p-3">
-            {activeRepository ? (
-              <>
-                <FailureDiagnosisPanel
-                  isLoading={workflowJobsQuery.isLoading}
-                  jobs={jobs}
-                />
-                <DeploymentHealthPanel
-                  config={activeRepository}
-                  healthResults={deployTargetHealthQuery.data ?? []}
-                  isLoading={deployTargetHealthQuery.isLoading}
-                  latestRun={latestRun}
-                />
-              </>
-            ) : (
-              <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-sm font-medium text-slate-600 shadow-sm">
-                active repository를 선택하면 실패 진단과 배포 URL 상태가 여기에
-                표시됩니다.
-              </section>
-            )}
-          </aside>
+            <section className="flowship-rise min-h-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+              {activeRepository && workflowRunsQuery.isSuccess && latestRun ? (
+                <div className="h-full min-h-0 overflow-auto pr-1">
+                  {selectedPanel === 'diagnosis' ? (
+                    <FailureDiagnosisPanel
+                      isLoading={workflowJobsQuery.isLoading}
+                      jobs={jobs}
+                    />
+                  ) : null}
 
-          <section className="min-h-[360px] overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-sm xl:col-span-2 xl:min-h-0">
-            {activeRepository && workflowRunsQuery.isSuccess && latestRun ? (
-              <div className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <div className="min-h-0 space-y-3 overflow-auto pr-1">
-                  <WorkflowMetrics runs={runs} />
-                  <WorkflowRunSummary run={selectedRun ?? latestRun} />
-                  <WorkflowRunTable
-                    onSelectRun={setSelectedRunId}
-                    runs={runs}
-                    selectedRunId={selectedRun?.id ?? null}
-                  />
-                </div>
+                  {selectedPanel === 'health' ? (
+                    <DeploymentHealthPanel
+                      config={activeRepository}
+                      healthResults={deployTargetHealthQuery.data ?? []}
+                      isLoading={deployTargetHealthQuery.isLoading}
+                      latestRun={latestRun}
+                    />
+                  ) : null}
 
-                <div className="min-h-0 space-y-3 overflow-auto pr-1">
-                  {workflowJobsQuery.isError ? (
+                  {selectedPanel === 'runs' ? (
+                    <div className="space-y-3">
+                      <WorkflowMetrics runs={runs} />
+                      <div className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
+                        <WorkflowRunSummary run={selectedRun ?? latestRun} />
+                        <WorkflowRunTable
+                          onSelectRun={setSelectedRunId}
+                          runs={runs}
+                          selectedRunId={selectedRun?.id ?? null}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {selectedPanel === 'jobs' && workflowJobsQuery.isError ? (
                     <section className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center shadow-sm">
                       <AlertTriangle
                         aria-hidden="true"
@@ -428,8 +477,10 @@ export function DashboardPage() {
                         선택된 run의 jobs를 가져오지 못했습니다.
                       </h2>
                     </section>
-                  ) : (
-                    <>
+                  ) : null}
+
+                  {selectedPanel === 'jobs' && !workflowJobsQuery.isError ? (
+                    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px]">
                       <WorkflowJobTimeline
                         isLoading={workflowJobsQuery.isLoading}
                         jobs={jobs}
@@ -437,17 +488,17 @@ export function DashboardPage() {
                       {workflowJobsQuery.isSuccess ? (
                         <FailureDetails jobs={jobs} />
                       ) : null}
-                    </>
-                  )}
+                    </div>
+                  ) : null}
                 </div>
-              </div>
-            ) : (
-              <div className="flex h-full min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-slate-300 text-center text-sm font-semibold text-slate-500">
-                실제 workflow run이 있으면 최근 runs와 job detail이 여기에
-                표시됩니다.
-              </div>
-            )}
-          </section>
+              ) : (
+                <div className="flex h-full min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-slate-300 text-center text-sm font-semibold text-slate-500">
+                  실제 workflow run이 있으면 선택한 보조 패널이 여기에
+                  표시됩니다.
+                </div>
+              )}
+            </section>
+          </main>
         </div>
       </div>
     </AppShell>

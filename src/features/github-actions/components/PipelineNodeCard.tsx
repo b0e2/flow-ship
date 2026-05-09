@@ -16,11 +16,11 @@ type PipelineNodeCardProps = {
 
 function getNodeClassName(status: PipelineNodeStatus) {
   if (status === 'success') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-900'
+    return 'border-emerald-200 bg-emerald-50/90 text-emerald-900'
   }
 
   if (status === 'failure') {
-    return 'border-red-200 bg-red-50 text-red-900'
+    return 'border-red-200 bg-red-50/90 text-red-900'
   }
 
   if (status === 'in_progress') {
@@ -67,7 +67,7 @@ export function PipelineNodeCard({
 
   return (
     <button
-      className={`w-full rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getNodeClassName(
+      className={`flowship-rise w-full rounded-2xl border px-2.5 py-2 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${getNodeClassName(
         node.status,
       )} ${isSelected ? 'ring-2 ring-slate-950 ring-offset-2' : ''} ${
         isRunning ? 'animate-pulse' : ''
@@ -76,21 +76,21 @@ export function PipelineNodeCard({
       type="button"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase">
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase">
           <StatusIcon status={node.status} />
           {node.status}
         </span>
-        <span className="rounded-full bg-white/70 px-2 py-1 text-xs font-semibold uppercase">
+        <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
           {node.source}
         </span>
       </div>
-      <h4 className="mt-2 line-clamp-2 text-sm font-semibold leading-5">
+      <h4 className="mt-1.5 line-clamp-2 text-xs font-semibold leading-4">
         {node.name}
       </h4>
-      <p className="mt-1 truncate text-xs font-medium opacity-75">
+      <p className="mt-1 truncate text-[11px] font-medium opacity-75">
         {node.jobName}
       </p>
-      <p className="mt-2 text-xs font-semibold opacity-80">
+      <p className="mt-1.5 text-[11px] font-semibold opacity-80">
         {formatDuration(node.durationSeconds)}
       </p>
     </button>

@@ -7,9 +7,14 @@ import {
   Loader2,
   XCircle,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import type { WorkflowJob, WorkflowRun } from '../model/githubActions.types'
 import type { PipelineNode, PipelineNodeStatus } from '../model/pipeline.types'
-import { formatDuration, getShortSha } from '../utils/githubActionsUtils'
+import {
+  formatDateTime,
+  formatDuration,
+  getShortSha,
+} from '../utils/githubActionsUtils'
 import { buildPipelineNodes } from '../utils/pipelineUtils'
 
 type PipelineVisualizerProps = {
@@ -42,6 +47,26 @@ function getNodeStyles(status: PipelineNodeStatus) {
   return 'border-slate-200 bg-white text-slate-800'
 }
 
+function getConnectorStyles(status: PipelineNodeStatus) {
+  if (status === 'success') {
+    return 'bg-emerald-300'
+  }
+
+  if (status === 'failure') {
+    return 'bg-red-300'
+  }
+
+  if (status === 'in_progress') {
+    return 'bg-blue-300'
+  }
+
+  if (status === 'queued') {
+    return 'bg-amber-300'
+  }
+
+  return 'bg-slate-200'
+}
+
 function StatusIcon({ status }: { status: PipelineNodeStatus }) {
   if (status === 'success') {
     return <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
@@ -66,36 +91,126 @@ function StatusIcon({ status }: { status: PipelineNodeStatus }) {
   return <Circle aria-hidden="true" className="h-5 w-5" />
 }
 
-function PipelineNodeCard({ node }: { node: PipelineNode }) {
+function PipelineNodeCard({
+  isSelected,
+  node,
+  onSelect,
+}: {
+  isSelected: boolean
+  node: PipelineNode
+  onSelect: () => void
+}) {
+  const isActive = node.status === 'in_progress'
+
   return (
-    <article
-      className={`min-w-[220px] rounded-2xl border p-4 shadow-sm ${getNodeStyles(
+    <button
+      className={`w-full min-w-[220px] rounded-2xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md lg:w-[240px] ${getNodeStyles(
         node.status,
-      )}`}
+      )} ${isSelected ? 'ring-2 ring-slate-950 ring-offset-2' : ''} ${
+        isActive ? 'animate-pulse shadow-blue-200' : ''
+      }`}
+      onClick={onSelect}
+      type="button"
     >
       <div className="flex items-start justify-between gap-3">
-        <StatusIcon status={node.status} />
+        <span
+          className={`rounded-full bg-white/70 p-2 ${
+            isActive ? 'shadow-[0_0_24px_rgba(37,99,235,0.45)]' : ''
+          }`}
+        >
+          <StatusIcon status={node.status} />
+        </span>
         <span className="rounded-full bg-white/70 px-2 py-1 text-xs font-semibold uppercase">
           {node.source}
         </span>
       </div>
-      <h3 className="mt-4 text-base font-semibold leading-6">{node.name}</h3>
+      <h3 className="mt-4 line-clamp-2 text-base font-semibold leading-6">
+        {node.name}
+      </h3>
+      {node.source === 'step' ? (
+        <p className="mt-2 text-xs font-medium opacity-75">{node.jobName}</p>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold opacity-80">
         <span>{node.status}</span>
         <span>{formatDuration(node.durationInSeconds)}</span>
       </div>
-      {node.htmlUrl ? (
-        <a
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
-          href={node.htmlUrl}
-          rel="noreferrer"
-          target="_blank"
+    </button>
+  )
+}
+
+function PipelineNodeDetail({ node }: { node: PipelineNode }) {
+  return (
+    <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Selected {node.source}
+          </p>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+            {node.name}
+          </h3>
+          <p className="mt-2 text-sm font-medium text-slate-600">
+            Job: {node.jobName}
+            {node.stepNumber ? ` · Step ${node.stepNumber.toString()}` : ''}
+          </p>
+        </div>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold ${getNodeStyles(
+            node.status,
+          )}`}
         >
-          GitHub detail
-          <ExternalLink aria-hidden="true" className="h-4 w-4" />
-        </a>
-      ) : null}
-    </article>
+          <StatusIcon status={node.status} />
+          {node.status}
+        </span>
+      </div>
+
+      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Duration
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-slate-950">
+            {formatDuration(node.durationInSeconds)}
+          </dd>
+        </div>
+        <div className="rounded-xl bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Started
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-slate-950">
+            {formatDateTime(node.startedAt)}
+          </dd>
+        </div>
+        <div className="rounded-xl bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Completed
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-slate-950">
+            {formatDateTime(node.completedAt)}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-4">
+        <p className="text-sm font-semibold text-slate-950">Detail / logs</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          GitHub Actions API의 jobs/steps 응답에는 step log 본문이 포함되지
+          않습니다. 실제 로그와 annotation은 GitHub Actions 상세 화면에서
+          확인하세요.
+        </p>
+        {node.htmlUrl ? (
+          <a
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-950 hover:underline"
+            href={node.htmlUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            GitHub detail
+            <ExternalLink aria-hidden="true" className="h-4 w-4" />
+          </a>
+        ) : null}
+      </div>
+    </aside>
   )
 }
 
@@ -104,7 +219,14 @@ export function PipelineVisualizer({
   jobs,
   isLoading,
 }: PipelineVisualizerProps) {
-  const nodes = buildPipelineNodes(jobs)
+  const nodes = useMemo(() => buildPipelineNodes(jobs), [jobs])
+  const preferredNode =
+    nodes.find((node) => node.status === 'in_progress') ??
+    nodes.find((node) => node.status === 'failure') ??
+    nodes[0]
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const selectedNode =
+    nodes.find((node) => node.id === selectedNodeId) ?? preferredNode
 
   if (!run) {
     return (
@@ -176,12 +298,35 @@ export function PipelineVisualizer({
       </div>
 
       <div className="mt-6 overflow-x-auto pb-2">
-        <div className="flex flex-col gap-3 lg:min-w-max lg:flex-row lg:items-stretch">
-          {nodes.map((node) => (
-            <PipelineNodeCard key={node.id} node={node} />
+        <ol className="flex flex-col gap-4 lg:min-w-max lg:flex-row lg:items-stretch lg:gap-0">
+          {nodes.map((node, index) => (
+            <li
+              className="flex flex-col gap-3 lg:flex-row lg:items-center"
+              key={node.id}
+            >
+              <PipelineNodeCard
+                isSelected={selectedNode?.id === node.id}
+                node={node}
+                onSelect={() => setSelectedNodeId(node.id)}
+              />
+              {index < nodes.length - 1 ? (
+                <div
+                  aria-hidden="true"
+                  className={`mx-6 h-8 w-1 self-center rounded-full lg:mx-3 lg:h-1 lg:w-10 ${getConnectorStyles(
+                    node.status,
+                  )}`}
+                />
+              ) : null}
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
+
+      {selectedNode ? (
+        <div className="mt-6">
+          <PipelineNodeDetail node={selectedNode} />
+        </div>
+      ) : null}
     </section>
   )
 }

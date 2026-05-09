@@ -15,6 +15,8 @@ export type PipelineNode = {
   name: string
   status: PipelineNodeStatus
   source: PipelineNodeSource
+  jobName: string
+  stepNumber?: number
   durationInSeconds: number | null
   startedAt: string | null
   completedAt: string | null

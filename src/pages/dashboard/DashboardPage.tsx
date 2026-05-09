@@ -13,7 +13,10 @@ import { useWorkflowJobs } from '../../features/github-actions/hooks/useWorkflow
 import { useWorkflowRuns } from '../../features/github-actions/hooks/useWorkflowRuns'
 import type { GitHubApiError } from '../../features/github-actions/model/githubActions.types'
 import { useGitHubActionsUiStore } from '../../features/github-actions/store/githubActionsUiStore'
-import { findLatestRun } from '../../features/github-actions/utils/githubActionsUtils'
+import {
+  findLatestRun,
+  isRunningWorkflowStatus,
+} from '../../features/github-actions/utils/githubActionsUtils'
 import { RepositoryConnectionSummary } from '../../features/repository/components/RepositoryConnectionSummary'
 import { RepositorySetupPanel } from '../../features/repository/components/RepositorySetupPanel'
 import { useRepositoryConfigStore } from '../../features/repository/store/repositoryConfigStore'
@@ -41,6 +44,18 @@ function getErrorHelp(error: GitHubApiError) {
   return 'GitHub Actions API 요청에 실패했습니다. repository 설정과 네트워크 상태를 확인하세요.'
 }
 
+function formatLastUpdatedAt(value: number) {
+  if (value === 0) {
+    return '아직 갱신 전'
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(value))
+}
+
 export function DashboardPage() {
   const config = useRepositoryConfigStore((state) => state.config)
   const selectedRunId = useGitHubActionsUiStore((state) => state.selectedRunId)
@@ -56,6 +71,9 @@ export function DashboardPage() {
     [workflowRunsQuery.data?.workflow_runs],
   )
   const latestRun = findLatestRun(runs)
+  const isWatchingLatestRun = latestRun
+    ? isRunningWorkflowStatus(latestRun.status)
+    : false
   const selectedRun =
     runs.find((run) => run.id === selectedRunId) ?? latestRun ?? null
   const workflowJobsQuery = useWorkflowJobs(config, selectedRun?.id ?? null)
@@ -95,6 +113,34 @@ export function DashboardPage() {
             </p>
           </div>
         </section>
+
+        {config && !shouldShowSetup ? (
+          <section className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {isWatchingLatestRun ? (
+                <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-700">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                  LIVE
+                </span>
+              ) : (
+                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
+                  Watching latest workflow run
+                </span>
+              )}
+              <span className="text-sm font-medium text-slate-600">
+                {isWatchingLatestRun
+                  ? 'queued 또는 in_progress 상태라 5초마다 갱신합니다.'
+                  : 'completed 상태에서는 자동 polling을 중지합니다.'}
+              </span>
+            </div>
+            <p className="text-sm font-medium text-slate-500">
+              마지막 갱신:{' '}
+              <span className="text-slate-900">
+                {formatLastUpdatedAt(workflowRunsQuery.dataUpdatedAt)}
+              </span>
+            </p>
+          </section>
+        ) : null}
 
         {shouldShowSetup ? (
           <RepositorySetupPanel

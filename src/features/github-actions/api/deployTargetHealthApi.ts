@@ -34,38 +34,21 @@ async function checkUrlHealth({
   }
 
   try {
-    const headResponse = await fetch(url, { method: 'HEAD' })
-
+    // no-cors bypasses CORS restrictions — resolves (opaque) if server responds,
+    // throws TypeError if server is unreachable / DNS failure
+    await fetch(url, { method: 'HEAD', mode: 'no-cors' })
     return {
       kind,
       url,
-      status: headResponse.ok ? 'reachable' : 'unreachable',
-      statusCode: headResponse.status,
-      message: headResponse.ok
-        ? '브라우저에서 URL 상태를 확인했습니다.'
-        : `HTTP ${headResponse.status.toString()} 응답을 받았습니다.`,
+      status: 'reachable',
+      message: '서버가 응답하고 있습니다.',
     }
   } catch {
-    try {
-      const getResponse = await fetch(url)
-
-      return {
-        kind,
-        url,
-        status: getResponse.ok ? 'reachable' : 'unreachable',
-        statusCode: getResponse.status,
-        message: getResponse.ok
-          ? '브라우저에서 URL 상태를 확인했습니다.'
-          : `HTTP ${getResponse.status.toString()} 응답을 받았습니다.`,
-      }
-    } catch {
-      return {
-        kind,
-        url,
-        status: 'cors_blocked',
-        message:
-          'CORS 정책으로 브라우저에서 직접 확인할 수 없습니다. 링크로 직접 확인하세요.',
-      }
+    return {
+      kind,
+      url,
+      status: 'unreachable',
+      message: '서버에 연결할 수 없거나 DNS 오류가 발생했습니다.',
     }
   }
 }

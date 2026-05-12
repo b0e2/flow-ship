@@ -17,7 +17,7 @@ export function WorkflowRunSummary({ run }: WorkflowRunSummaryProps) {
   const branch = run.head_branch ?? 'unknown branch'
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -27,7 +27,7 @@ export function WorkflowRunSummary({ run }: WorkflowRunSummaryProps) {
             {run.name ?? 'Unnamed workflow'}
           </h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
+            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {statusLabel}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
@@ -51,11 +51,11 @@ export function WorkflowRunSummary({ run }: WorkflowRunSummaryProps) {
         </a>
       </div>
 
-      <div className="mt-6 grid gap-4 border-t border-slate-100 pt-5 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 border-t border-slate-100 pt-5 dark:border-slate-800 md:grid-cols-3">
         <div>
-          <p className="text-sm font-semibold text-slate-500">Actor</p>
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Actor</p>
           <a
-            className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-900 hover:underline"
+            className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-900 hover:underline dark:text-slate-200"
             href={run.actor.html_url}
             rel="noreferrer"
             target="_blank"
@@ -69,15 +69,15 @@ export function WorkflowRunSummary({ run }: WorkflowRunSummaryProps) {
           </a>
         </div>
         <div>
-          <p className="text-sm font-semibold text-slate-500">Duration</p>
-          <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Duration</p>
+          <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-slate-900 dark:text-slate-200">
             <Timer aria-hidden="true" className="h-4 w-4 text-slate-400" />
             {formatDuration(getRunDuration(run))}
           </p>
         </div>
         <div>
-          <p className="text-sm font-semibold text-slate-500">Started at</p>
-          <p className="mt-2 text-sm font-medium text-slate-900">
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Started at</p>
+          <p className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-200">
             {formatDateTime(run.run_started_at ?? run.created_at)}
           </p>
         </div>

@@ -20,8 +20,8 @@ export function WorkflowRunTable({
   onSelectRun,
 }: WorkflowRunTableProps) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-6 py-5">
+    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+      <div className="border-b border-slate-100 px-6 py-5 dark:border-slate-800">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           Recent workflow runs
         </h2>
@@ -32,7 +32,7 @@ export function WorkflowRunTable({
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
             <tr>
               <th className="px-6 py-3 font-semibold">Workflow</th>
               <th className="px-4 py-3 font-semibold">Branch</th>
@@ -44,23 +44,23 @@ export function WorkflowRunTable({
               <th className="px-6 py-3 font-semibold">Link</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {runs.map((run) => (
               <tr
-                className={`cursor-pointer align-middle transition hover:bg-slate-50 ${
-                  selectedRunId === run.id ? 'bg-slate-100' : ''
+                className={`cursor-pointer align-middle transition hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
+                  selectedRunId === run.id ? 'bg-slate-100 dark:bg-slate-800' : ''
                 }`}
                 key={run.id}
                 onClick={() => onSelectRun(run.id)}
               >
-                <td className="px-6 py-4 font-semibold text-slate-950">
+                <td className="px-6 py-4 font-semibold text-slate-950 dark:text-white">
                   {run.name ?? 'Unnamed workflow'}
                 </td>
-                <td className="px-4 py-4 text-slate-700">
+                <td className="px-4 py-4 text-slate-700 dark:text-slate-300">
                   {run.head_branch ?? 'unknown'}
                 </td>
                 <td className="px-4 py-4">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-300">
                     {formatWorkflowStatus(run.status, run.conclusion)}
                   </span>
                 </td>
@@ -69,7 +69,7 @@ export function WorkflowRunTable({
                 </td>
                 <td className="px-4 py-4">
                   <a
-                    className="flex items-center gap-2 font-medium text-slate-800 hover:underline"
+                    className="flex items-center gap-2 font-medium text-slate-800 hover:underline dark:text-slate-300"
                     href={run.actor.html_url}
                     rel="noreferrer"
                     target="_blank"
@@ -82,10 +82,10 @@ export function WorkflowRunTable({
                     {run.actor.login}
                   </a>
                 </td>
-                <td className="px-4 py-4 text-slate-700">
+                <td className="px-4 py-4 text-slate-700 dark:text-slate-300">
                   {formatDuration(getRunDuration(run))}
                 </td>
-                <td className="px-4 py-4 text-slate-700">
+                <td className="px-4 py-4 text-slate-700 dark:text-slate-300">
                   {formatDateTime(run.run_started_at ?? run.created_at)}
                 </td>
                 <td
@@ -93,7 +93,7 @@ export function WorkflowRunTable({
                   onClick={(event) => event.stopPropagation()}
                 >
                   <a
-                    className="inline-flex items-center gap-1.5 font-semibold text-slate-950 hover:underline"
+                    className="inline-flex items-center gap-1.5 font-semibold text-slate-950 hover:underline dark:text-slate-200"
                     href={run.html_url}
                     rel="noreferrer"
                     target="_blank"

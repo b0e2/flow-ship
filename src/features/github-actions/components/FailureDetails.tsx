@@ -38,20 +38,20 @@ export function FailureDetails({ jobs }: FailureDetailsProps) {
   })
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
       <h2 className="text-xl font-semibold tracking-tight text-slate-950">
         Failure details
       </h2>
 
       {failedItems.length === 0 ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-600">
+        <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
           실패한 job/step이 없습니다.
         </p>
       ) : (
         <div className="mt-4 space-y-3">
           {failedItems.map((item) => (
             <article
-              className="rounded-2xl border border-red-200 bg-red-50 p-4"
+              className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800/50 dark:bg-red-950/30"
               key={`${item.jobId}-${item.stepName}`}
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

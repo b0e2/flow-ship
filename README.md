@@ -20,6 +20,20 @@ http://mybucket-20263620.s3-website-us-east-1.amazonaws.com
 
 ---
 
+## 시연 영상 (Demo Videos)
+
+### GitHub Actions를 활용한 CI/CD 환경 구축 (S3 배포)
+```
+https://youtu.be/QjVTCSNxVBg
+```
+
+### AWS Amplify 서비스를 활용한 호스팅
+```
+https://youtu.be/n298cOE3dog
+```
+
+---
+
 ## 초보 프론트엔드 개발자에게 FlowShip이 필요한 이유
 
 처음 GitHub Actions로 배포를 설정하면 이런 상황을 겪게 됩니다.

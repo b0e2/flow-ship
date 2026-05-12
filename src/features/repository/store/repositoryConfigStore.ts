@@ -20,8 +20,6 @@ type RepositoryConfigState = PersistedRepositoryState & {
   setHasHydrated: (hasHydrated: boolean) => void
 }
 
-const LEGACY_STORAGE_KEY = 'flow-ship-repository-config'
-
 function getUserStorageKey(userId: string) {
   return `flowship:repositories:${userId}`
 }
@@ -81,47 +79,6 @@ function writeUserState(userId: string, state: PersistedRepositoryState) {
   localStorage.setItem(getUserStorageKey(userId), JSON.stringify(state))
 }
 
-function readLegacyState(): PersistedRepositoryState | null {
-  const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
-
-  if (!raw) {
-    return null
-  }
-
-  let parsed: unknown
-
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return null
-  }
-
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    !('state' in parsed) ||
-    typeof parsed.state !== 'object' ||
-    parsed.state === null
-  ) {
-    return null
-  }
-
-  const state = parsed.state as Record<string, unknown>
-
-  if (isPersistedRepositoryState(state)) {
-    return state
-  }
-
-  if ('config' in state && isRepositoryConfig(state.config)) {
-    return {
-      repositories: [state.config],
-      activeRepositoryId: state.config.id,
-    }
-  }
-
-  return null
-}
-
 function persistForCurrentUser(state: RepositoryConfigState) {
   if (!state.storageUserId) {
     return
@@ -155,16 +112,10 @@ export const useRepositoryConfigStore = create<RepositoryConfigState>()(
       }
 
       const savedState = readUserState(userId)
-      const legacyState = savedState ? null : readLegacyState()
-      const nextState = savedState ?? legacyState ?? null
-
-      if (legacyState && !savedState) {
-        writeUserState(userId, legacyState)
-      }
 
       set({
-        repositories: nextState?.repositories ?? [],
-        activeRepositoryId: nextState?.activeRepositoryId ?? null,
+        repositories: savedState?.repositories ?? [],
+        activeRepositoryId: savedState?.activeRepositoryId ?? null,
         storageUserId: userId,
         hasHydrated: true,
       })

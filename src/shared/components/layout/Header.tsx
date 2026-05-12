@@ -15,7 +15,7 @@ export function Header() {
           </div>
           <div>
             <p className="text-sm font-bold tracking-tight text-white">
-              FlowShip-시연
+              FlowShip-시연-aws
             </p>
             <p className="text-[11px] font-medium text-slate-400">
               Deployment Control Center

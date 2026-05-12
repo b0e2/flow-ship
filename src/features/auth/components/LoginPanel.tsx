@@ -17,13 +17,16 @@ export function LoginPanel({ onCreateAccount }: LoginPanelProps) {
     setIsSubmitting(true)
     setError(null)
 
-    const result = await login(email, password)
-
-    if (!result.ok) {
-      setError(result.message ?? '로그인하지 못했습니다.')
+    try {
+      const result = await login(email, password)
+      if (!result.ok) {
+        setError(result.message ?? '로그인하지 못했습니다.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '로그인하지 못했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setIsSubmitting(false)
   }
 
   return (

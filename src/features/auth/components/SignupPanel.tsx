@@ -24,13 +24,16 @@ export function SignupPanel({ onBackToLogin }: SignupPanelProps) {
     setIsSubmitting(true)
     setError(null)
 
-    const result = await signup(email, displayName, password)
-
-    if (!result.ok) {
-      setError(result.message ?? '계정을 만들지 못했습니다.')
+    try {
+      const result = await signup(email, displayName, password)
+      if (!result.ok) {
+        setError(result.message ?? '계정을 만들지 못했습니다.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '계정을 만들지 못했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setIsSubmitting(false)
   }
 
   return (

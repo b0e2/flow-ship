@@ -38,12 +38,12 @@ export function UserMenu() {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
-        <UserCircle aria-hidden="true" className="h-4 w-4" />
+      <div className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/8 px-3 py-2 text-sm font-semibold text-white">
+        <UserCircle aria-hidden="true" className="h-4 w-4 text-slate-300" />
         <span>{session.displayName}</span>
       </div>
       <button
-        className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-500"
+        className="inline-flex items-center gap-1.5 rounded-2xl border border-white/15 bg-white/8 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/15"
         onClick={handleLogout}
         type="button"
       >
@@ -51,7 +51,7 @@ export function UserMenu() {
         Logout
       </button>
       <button
-        className="inline-flex items-center gap-1.5 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300"
+        className="inline-flex items-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300 transition hover:border-red-500/50 hover:bg-red-500/15"
         onClick={handleDeleteAccount}
         type="button"
       >

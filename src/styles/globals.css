@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@variant dark (&:is(.dark, .dark *));
+
 :root {
   color: #0f172a;
   background: #f8fafc;
@@ -56,6 +58,18 @@ select {
   }
 }
 
+@keyframes flowship-focus {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .flowship-flow-line {
   animation: flowship-flow 1.8s linear infinite;
   background-size: 200% 100%;
@@ -63,4 +77,8 @@ select {
 
 .flowship-rise {
   animation: flowship-rise 0.32s ease-out both;
+}
+
+.flowship-focus-card {
+  animation: flowship-focus 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }

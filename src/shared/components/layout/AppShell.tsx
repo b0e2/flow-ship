@@ -9,11 +9,11 @@ type AppShellProps = {
 
 export function AppShell({ children, className }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <Header />
       <main
         className={cn(
-          'mx-auto w-full max-w-[1920px] px-4 py-4 lg:px-5',
+          'w-full px-3 py-2',
           className,
         )}
       >

@@ -34,7 +34,7 @@ export function SignupPanel({ onBackToLogin }: SignupPanelProps) {
   }
 
   return (
-    <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
         <UserPlus aria-hidden="true" className="h-5 w-5" />
       </div>
@@ -56,7 +56,7 @@ export function SignupPanel({ onBackToLogin }: SignupPanelProps) {
           </span>
           <input
             autoComplete="name"
-            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-400 dark:focus:ring-slate-400/20"
             onChange={(event) => setDisplayName(event.target.value)}
             type="text"
             value={displayName}
@@ -66,7 +66,7 @@ export function SignupPanel({ onBackToLogin }: SignupPanelProps) {
           <span className="text-sm font-semibold text-slate-700">Email</span>
           <input
             autoComplete="email"
-            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-400 dark:focus:ring-slate-400/20"
             onChange={(event) => setEmail(event.target.value)}
             type="email"
             value={email}
@@ -76,7 +76,7 @@ export function SignupPanel({ onBackToLogin }: SignupPanelProps) {
           <span className="text-sm font-semibold text-slate-700">Password</span>
           <input
             autoComplete="new-password"
-            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-400 dark:focus:ring-slate-400/20"
             onChange={(event) => setPassword(event.target.value)}
             type="password"
             value={password}
@@ -88,7 +88,7 @@ export function SignupPanel({ onBackToLogin }: SignupPanelProps) {
           </span>
           <input
             autoComplete="new-password"
-            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+            className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-slate-400 dark:focus:ring-slate-400/20"
             onChange={(event) => setConfirmPassword(event.target.value)}
             type="password"
             value={confirmPassword}

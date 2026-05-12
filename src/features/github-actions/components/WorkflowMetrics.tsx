@@ -21,12 +21,12 @@ type MetricCardProps = {
 
 function MetricCard({ label, value, icon: Icon }: MetricCardProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-slate-500">{label}</p>
+        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{label}</p>
         <Icon aria-hidden="true" className="h-5 w-5 text-slate-400" />
       </div>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+      <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
         {value}
       </p>
     </div>

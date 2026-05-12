@@ -1,6 +1,5 @@
 import {
   CheckCircle2,
-  Circle,
   CircleDashed,
   Loader2,
   XCircle,
@@ -14,85 +13,87 @@ type PipelineNodeCardProps = {
   onSelect: () => void
 }
 
-function getNodeClassName(status: PipelineNodeStatus) {
-  if (status === 'success') {
-    return 'border-emerald-200 bg-emerald-50/90 text-emerald-900'
-  }
+type NodeStyle = {
+  card: string
+  accent: string
+  iconColor: string
+  selectedRing: string
+}
 
-  if (status === 'failure') {
-    return 'border-red-200 bg-red-50/90 text-red-900'
-  }
+function getNodeStyle(status: PipelineNodeStatus, isSelected: boolean): NodeStyle {
+  const ring = isSelected ? 'ring-1 ring-offset-1' : ''
 
-  if (status === 'in_progress') {
-    return 'border-blue-200 bg-blue-50 text-blue-900 shadow-[0_0_28px_rgba(59,130,246,0.22)]'
+  if (status === 'success') return {
+    card: `bg-white dark:bg-slate-800/70 border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 ${ring}`,
+    accent: 'bg-emerald-400/50 dark:bg-emerald-600/40',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    selectedRing: isSelected ? 'ring-emerald-300 dark:ring-emerald-600' : '',
   }
-
-  if (status === 'queued') {
-    return 'border-slate-200 bg-slate-50 text-slate-600'
+  if (status === 'failure') return {
+    card: `bg-white dark:bg-slate-800/70 border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 ${ring}`,
+    accent: 'bg-red-400/50 dark:bg-red-600/40',
+    iconColor: 'text-red-500 dark:text-red-400',
+    selectedRing: isSelected ? 'ring-red-300 dark:ring-red-600' : '',
   }
-
-  if (status === 'skipped' || status === 'cancelled') {
-    return 'border-slate-200 bg-slate-50 text-slate-400'
+  if (status === 'in_progress') return {
+    card: `bg-white dark:bg-slate-800/70 border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 ${ring}`,
+    accent: 'bg-sky-400/50 dark:bg-sky-600/40',
+    iconColor: 'text-sky-500 dark:text-sky-400',
+    selectedRing: isSelected ? 'ring-sky-300 dark:ring-sky-600' : '',
   }
-
-  return 'border-slate-200 bg-white text-slate-800'
+  if (status === 'queued') return {
+    card: `bg-white/70 dark:bg-slate-800/40 border-slate-200/70 dark:border-slate-700/40 text-slate-500 dark:text-slate-400 ${ring}`,
+    accent: 'bg-slate-300/50 dark:bg-slate-600/40',
+    iconColor: 'text-slate-400 dark:text-slate-500',
+    selectedRing: isSelected ? 'ring-slate-300 dark:ring-slate-600' : '',
+  }
+  return {
+    card: `bg-white/50 dark:bg-slate-800/30 border-slate-200/50 dark:border-slate-700/30 text-slate-400 dark:text-slate-500 ${ring}`,
+    accent: 'bg-slate-200/50 dark:bg-slate-700/30',
+    iconColor: 'text-slate-300 dark:text-slate-600',
+    selectedRing: '',
+  }
 }
 
 function StatusIcon({ status }: { status: PipelineNodeStatus }) {
-  if (status === 'success') {
-    return <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
-  }
-
-  if (status === 'failure') {
-    return <XCircle aria-hidden="true" className="h-4 w-4" />
-  }
-
-  if (status === 'in_progress') {
-    return <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-  }
-
-  if (status === 'queued' || status === 'skipped') {
-    return <CircleDashed aria-hidden="true" className="h-4 w-4" />
-  }
-
-  return <Circle aria-hidden="true" className="h-4 w-4" />
+  if (status === 'success') return <CheckCircle2 className="h-3 w-3" />
+  if (status === 'failure') return <XCircle className="h-3 w-3" />
+  if (status === 'in_progress') return <Loader2 className="h-3 w-3 animate-spin" />
+  return <CircleDashed className="h-3 w-3" />
 }
 
-export function PipelineNodeCard({
-  isSelected,
-  node,
-  onSelect,
-}: PipelineNodeCardProps) {
-  const isRunning = node.status === 'in_progress'
+export function PipelineNodeCard({ isSelected, node, onSelect }: PipelineNodeCardProps) {
+  const style = getNodeStyle(node.status, isSelected)
 
   return (
     <button
-      className={`flowship-rise w-full rounded-2xl border px-2.5 py-2 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${getNodeClassName(
-        node.status,
-      )} ${isSelected ? 'ring-2 ring-slate-950 ring-offset-2' : ''} ${
-        isRunning ? 'animate-pulse' : ''
-      }`}
+      className={`relative w-full overflow-hidden rounded-xl border text-left shadow-sm transition duration-150 hover:-translate-y-px hover:shadow-md ${style.card} ${style.selectedRing}`}
       onClick={onSelect}
       type="button"
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase">
-          <StatusIcon status={node.status} />
-          {node.status}
-        </span>
-        <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
-          {node.source}
-        </span>
+      <div className={`absolute inset-y-0 left-0 w-0.5 ${style.accent}`} />
+      <div className="py-2 pl-3 pr-2">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${style.iconColor}`}>
+            <StatusIcon status={node.status} />
+            {node.status === 'in_progress' ? 'running' : node.status}
+          </span>
+          <span className="rounded-full bg-slate-100 px-1.5 py-px text-[9px] font-medium text-slate-500 dark:bg-slate-700/50 dark:text-slate-400">
+            {node.source}
+          </span>
+        </div>
+        <h4 className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-4 text-slate-800 dark:text-slate-200">
+          {node.name}
+        </h4>
+        <div className="mt-1.5 flex items-center justify-between gap-1">
+          <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">{node.jobName}</p>
+          {node.durationSeconds != null && node.durationSeconds > 0 ? (
+            <span className="shrink-0 text-[10px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+              {formatDuration(node.durationSeconds)}
+            </span>
+          ) : null}
+        </div>
       </div>
-      <h4 className="mt-1.5 line-clamp-2 text-xs font-semibold leading-4">
-        {node.name}
-      </h4>
-      <p className="mt-1 truncate text-[11px] font-medium opacity-75">
-        {node.jobName}
-      </p>
-      <p className="mt-1.5 text-[11px] font-semibold opacity-80">
-        {formatDuration(node.durationSeconds)}
-      </p>
     </button>
   )
 }

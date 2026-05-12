@@ -23,14 +23,13 @@ http://mybucket-20263620.s3-website-us-east-1.amazonaws.com
 ## 시연 영상 (Demo Videos)
 
 ### GitHub Actions를 활용한 CI/CD 환경 구축 (S3 배포)
-```
-https://youtu.be/QjVTCSNxVBg
-```
+
+[![시연 영상](https://img.youtube.com/vi/QjVTCSNxVBg/0.jpg)](https://youtu.be/QjVTCSNxVBg)
+
 
 ### AWS Amplify 서비스를 활용한 호스팅
-```
-https://youtu.be/n298cOE3dog
-```
+
+[![시연 영상](https://img.youtube.com/vi/n298cOE3dog/0.jpg)](https://youtu.be/n298cOE3dog)
 
 ---
 
